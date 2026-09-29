@@ -1,6 +1,7 @@
 """SESSION 05 - Strategy II: feature flags.
 
-    python 05_feature_flags.py
+    python 05_feature_flags.py         the checks
+    python 05_feature_flags.py demo    every flag state, side by side
 
 THE PAIN
     Session 04 gave you interchangeable grading rules. But you still chose one
@@ -61,6 +62,7 @@ THE DOWNSIDE - and this one is not really about code
     precisely why you must ask before you ship it.
 """
 import hashlib
+import sys
 from abc import ABC, abstractmethod
 from check import check
 
@@ -143,7 +145,61 @@ class Gradebook:
         raise NotImplementedError
 
 
+def demo():
+    """Show how each flag STATE changes what one student sees.
+
+    python 05_feature_flags.py demo
+    """
+    print("One student - s001 - with a score of 73. Only the FLAG changes.")
+    print()
+    print(f"  {'FLAG STATE':<26} {'is_on':<7} {'RULE':<16} SEES")
+    print("  " + "-" * 62)
+
+    cases = [
+        ("never set (absent)",      "absent"),
+        ("set to False",            False),
+        ("set to True",             True),
+        ('{"percent": 0}',          {"percent": 0}),
+        ('{"percent": 100}',        {"percent": 100}),
+        ('{"percent": 50}',         {"percent": 50}),
+        ("name misspelled in config", "typo"),
+    ]
+
+    for label, value in cases:
+        flags = FeatureFlags()
+        if value == "typo":
+            flags.set("new_gradng", True)          # one letter missing
+        elif value != "absent":
+            flags.set(NEW_GRADING, value)
+
+        book = Gradebook(flags, current=BulgarianScale(),
+                         candidate=Percentage())
+        on = flags.is_on(NEW_GRADING, "s001")
+        rule = type(book.strategy_for("s001")).__name__
+        print(f"  {label:<26} {str(on):<7} {rule:<16} {book.grade('s001', 73)}")
+
+    print()
+    print("  ABSENT and FALSE are indistinguishable from outside, on purpose.")
+    print("  Both fall back to the rule that was already working. So does a")
+    print("  misspelled flag name - which is why that typo is so dangerous:")
+    print("  nothing breaks, the new feature simply never happens, and no")
+    print("  error is ever printed.")
+    print()
+
+    flags = FeatureFlags({NEW_GRADING: {"percent": 50}})
+    book = Gradebook(flags, current=BulgarianScale(), candidate=Percentage())
+    print("  At 50 percent, the SAME flag gives different students different")
+    print("  rules - and the same student always gets the same one:")
+    for sid in ("s001", "s002", "s003", "s004", "s005"):
+        print(f"      {sid}  bucket {bucket_of(sid, NEW_GRADING):>2}  "
+              f"-> {book.grade(sid, 73)}")
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "demo":
+        demo()
+        raise SystemExit
+
     print("SESSION 05 - feature flags")
     flags = FeatureFlags()
     book = Gradebook(flags, current=BulgarianScale(), candidate=Percentage())
