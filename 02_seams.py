@@ -117,17 +117,9 @@ if __name__ == "__main__":
     print("SESSION 02 - seams")
     course = {"id": "c01", "title": "Databases", "credits": 6}
 
-    # ---- WE WRITE THESE TWO TOGETHER -------------------------------------
-    # Run the file before you change anything. One of these passes and one
-    # fails, and the one that PASSES is the more interesting of the two.
-    #
-    # It passes because the deadline is in 2030 and your computer says it is
-    # not 2030 yet, so registration is open. It would pass against literally
-    # any code. Come back in 2030 and it starts failing on its own.
-    #
-    # That is a check that is green for a reason that has nothing to do with
-    # your program being right - and you cannot tell the difference from the
-    # outside. Keep it in mind every time you see a green line today.
+    # Run this before changing anything. One passes, one fails - and the one
+    # that PASSES only does so because it is not 2030 yet. It would pass
+    # against any code at all. Green does not always mean correct.
     before = Registration(clock=lambda: datetime(2030, 2, 20))
     check("open before the deadline", before.register("Ivan", course), True)
 
@@ -135,32 +127,9 @@ if __name__ == "__main__":
     check_raises("closed after the deadline", ValueError,
                  after.register, "Ivan", course)
 
-    # ---- NOW YOU WRITE THE REST ------------------------------------------
-    # Four behaviours. Write the check FIRST, watch it fail, then open the
-    # seam that makes it pass. If a check looks impossible to write, that is
-    # the point - it means the seam is still missing. Say so out loud.
+    # YOUR TURN - write one check for each, then make them pass:
+    #   the message can be captured instead of printed
+    #   the fee rule can be swapped from outside - 25 lv per credit
+    #   Registration() with no arguments still works
     #
-    # seam 2 - capture output instead of printing it
-    #   "notification captured, not printed"
-    #       You need somewhere for the message to land, so start with an
-    #       empty list:   sent = []
-    #       Then build a Registration with notify=sent.append - a list's
-    #       .append IS a function, so it fits exactly where print() fitted.
-    #       Register Maria, then check `sent` holds exactly:
-    #           ["Dear Maria, you are registered for Databases."]
-    #       Maria's message will not appear on screen. That is the proof.
-    #
-    # seam 3 - swap the pricing rule from outside
-    #   "fee rule swapped without editing register()"
-    #       pass fee_rule=lambda c: c["credits"] * 25, register Georgi,
-    #       and check `.charged`. Work out the number yourself first -
-    #       the course is 6 credits.
-    #
-    # and the defaults must still work
-    #   "defaults are still sensible"
-    #       Registration() with no arguments at all should still have a
-    #       callable fee_rule. WHY THIS CHECK EARNS ITS PLACE: it is the one
-    #       that catches you breaking every existing caller.
-    #
-    # STRETCH: write a check that proves the default clock is the REAL clock,
-    #          without waiting for March. Harder than it sounds - discuss.
+    # Each seam is one line in __init__ and one line in register().

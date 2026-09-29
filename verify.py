@@ -32,7 +32,8 @@ SOLUTIONS = os.path.join(HERE, "solutions")
 
 # Sessions with no TODOs: students get working code and break it deliberately,
 # so the file they receive must be green on arrival.
-COMPLETE = ["01_baseline.py", "16_layers.py", "24_services.py"]
+COMPLETE = ["01_baseline.py", "03_coupling.py", "16_layers.py",
+            "24_services.py"]
 
 failures = []
 

@@ -5,6 +5,12 @@
 THE PAIN
     Every new faculty means editing the same if/elif chain. You felt it in 01.
 
+FIRST RUN LOOKS BROKEN. IT IS NOT.
+    You get a traceback, not PASS/FAIL lines, because the methods below raise
+    NotImplementedError until you write them. Read the LAST line of the
+    traceback - it names the method to write first. As soon as one method
+    works you start getting normal PASS/FAIL output again.
+
 BUILD IT TOGETHER (15 min - we write this on the projector, you type along)
     STEP 1  Write the first check, before any class exists:
                 check("bulgarian top", Gradebook(BulgarianScale()).grade(91),
@@ -103,24 +109,11 @@ if __name__ == "__main__":
     check("bulgarian top", Gradebook(BulgarianScale()).grade(91),
           "6 (Excellent)")
 
-    # ---- NOW YOU WRITE THE REST ------------------------------------------
-    # Five behaviours. For each one: write the check, RUN IT AND WATCH IT
-    # FAIL, then write the code. In that order. A check you never saw fail
-    # is a check you have no reason to trust.
+    # YOUR TURN - write one check for each, then make them pass:
+    #   bulgarian fail          49 on the default scale
+    #   pass / fail             60 and 59 under PassFail
+    #   percentage              73 under Percentage
+    #   adjustable pass mark    47 under BulgarianScale(pass_mark=45)
     #
-    #   "bulgarian fail"         49 on the default scale.
-    #   "pass"                   60 under PassFail.
-    #   "fail"                   59 under PassFail.  <- decide the boundary
-    #                            yourselves: is 60 a pass? Argue it, then
-    #                            encode your answer. The two checks together
-    #                            pin the boundary down so nobody can move it
-    #                            by accident later.
-    #   "percentage"             73 under Percentage.
-    #   "adjustable pass mark"   47 when BulgarianScale(pass_mark=45).
-    #                            Write this one LAST - it is the twist, and
-    #                            it is what forces pass_mark out of the code
-    #                            and into the constructor.
-    #
-    # The docstring's TODOs give you the exact strings. If you and your pair
-    # disagree about an expected value, that disagreement IS the exercise -
-    # settle it before you write a line of implementation.
+    # Do the last one first if you like. It is the one that forces pass_mark
+    # out of the code and into the constructor.

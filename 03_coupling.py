@@ -12,40 +12,34 @@ BLAST RADIUS
     your coupling, and unlike the definition you can argue about it with
     evidence. blast_radius() below counts for you, using ast.
 
-BUILD IT TOGETHER (12 min - we read blast_radius() line by line)
-    Today is the one session where we do not write the tool, we read it. It
-    is 15 lines and it is the only honest thing in this course.
+THE TWO WORDS, AND WHAT EACH ONE BUYS YOU
+    COUPLING   how much one thing depends on another.
+               LOW coupling buys you: when you change X, you do not have to
+               open Y. The change stays where you put it.
 
-    STEP 1  Read blast_radius(). It parses each class with ast and asks, per
-            method: does this method mention that name?
-            WHY AST AND NOT A TEXT SEARCH: ctrl-F finds the word "fee" in a
-            comment, in a docstring, in the string "coffee". The parser knows
-            the difference between a NAME and some letters. When you measure
-            something, the measurement has to be harder to fool than the
-            thing it measures.
+    COHESION   how much the things inside one class belong together.
+               HIGH cohesion buys you: you can read one method and know what
+               it is for, because it only does one job.
 
-    STEP 2  Before running anything, PREDICT out loud. Write the numbers on
-            the board. To change the pricing rule: how many methods in Flat?
-            How many in Split?
-            WHY PREDICT FIRST: if you look at the number before committing to
-            a guess, you will find it obvious and learn nothing. A prediction
-            you got wrong is worth ten you never made.
+    They are not the same knob. A class can be badly coupled AND badly
+    cohesive - Flat below is both - or low-coupled and still incoherent.
 
-    STEP 3  Run it. Compare with the board.
+NOTHING TO IMPLEMENT TODAY
+    There are no TODOs. Run the file, read the three measurements, and argue.
+    Below are two designs doing the same job: Flat is written the way session
+    01 was; Split separates pricing from enrolling.
 
-    STEP 4  Now look at measurement 3 - renaming `grade` - and predict again.
-            WHY THIS ONE MATTERS MOST: it is the measurement where the
-            "better" design wins nothing. Do not let anyone skip past it.
+    1. Before you run it, PREDICT. To change the pricing rule - how many
+       methods in Flat? How many in Split? Say a number out loud first.
+       A prediction you got wrong is worth ten you never made.
 
-YOUR JOB (25 min)
-    Two designs do the same job. Flat is written the way session 01 was.
-    Split separates pricing from enrolling.
+    2. Run it. The first measurement says 1 and 1 - the same. So look at the
+       two methods themselves. Flat.register changes pricing while also
+       storing a row and sending a message; Pricing.fee_for is one line about
+       money. THAT is the difference, and the count did not show it.
 
-    1. Run the file and read the three measurements.
-    2. Change the fee to 25 lv per credit. Do it in BOTH designs, timing
-       yourself. The last two checks go green when you are done.
-    3. Before running it - PREDICT the blast radius of adding VAT. Then
-       measure.
+    3. Measurement 3 is the one that matters most: 5 against 5. Do not let
+       anyone skip it.
 
 THE RESULT YOU SHOULD EXPECT
     To change the PRICING RULE, Flat makes you open a method that also stores
@@ -182,17 +176,22 @@ if __name__ == "__main__":
     print("SESSION 03 - coupling, measured")
     course = {"id": "c01", "title": "Databases", "credits": 6}
 
-    print("\n1. TO CHANGE THE PRICING RULE, WHICH METHOD DO YOU OPEN?")
+    print("\nThese three measurements RENAME NOTHING and EDIT NOTHING.")
+    print("They only count how many methods a change would force you to open.")
+    print("The one real edit you make today is the price, at the bottom.")
+    print("\n1. IF YOU CHANGED THE PRICING RULE - which method would you open?")
     show("Flat", ["Flat.register"])
     show("Split", ["Pricing.fee_for"])
     print("      Flat.register also stores a row and sends a message.")
     print("      Pricing.fee_for does one thing. Same edit, different risk.")
 
-    print("\n2. HOW MANY METHODS READ THE FEE? (same in both - and\n      that is fine. READING a value is not coupling to the RULE.)")
+    print("\n2. IF YOU RENAMED THE FEE FIELD - how many mention it?")
+    print("      (same in both, and that is fine - READING a value is not")
+    print("      coupling to the RULE that produces it.)")
     show("Flat", blast_radius("fee", Flat))
     show("Split", blast_radius("fee", Split, Enrolment, Pricing))
 
-    print("\n3. THE HONEST ONE - rename the grade field")
+    print("\n3. IF YOU RENAMED THE GRADE FIELD - how many mention it?")
     show("Flat", blast_radius("grade", Flat))
     show("Split", blast_radius("grade", Split, Enrolment))
     print("      Barely different. Decoupling helped with pricing because")
@@ -210,8 +209,16 @@ if __name__ == "__main__":
         check(f"{name}: ungraded row is outstanding",
               system.outstanding(), 120)
 
-    print("\n-- TODO: make the fee 25 lv per credit in BOTH designs --")
-    check("split: pricing rule is per credit", Pricing().fee_for(course), 150)
-    flat = Flat()
-    flat.register("Georgi", course)
-    check("flat: charges per credit", flat.rows[0]["fee"], 150)
+    print("\n-- so what do you actually buy --")
+    print("   LOW COUPLING  buys you a smaller blast radius on the changes")
+    print("                 you predicted. Look at measurement 1: the count")
+    print("                 was equal, but in Flat you edit pricing while")
+    print("                 looking at storage and messaging.")
+    print("   HIGH COHESION buys you a method you can read in one breath.")
+    print("                 Pricing.fee_for is one line about money. That is")
+    print("                 the real difference, and it is not a number.")
+    print("   AND THE BILL  measurement 3 is 5 against 5. Split anticipated")
+    print("                 pricing changing and was rewarded. It never")
+    print("                 anticipated the row shape changing and got")
+    print("                 nothing. You cannot decouple along every axis -")
+    print("                 that is just a program with no structure.")

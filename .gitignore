@@ -27,3 +27,6 @@ venv/
 .vscode/
 *.swp
 .DS_Store
+
+# Your own scratch space for working through sessions. Never published.
+practice/
