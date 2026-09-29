@@ -1,55 +1,93 @@
-# Architecting Digital Systems - labs
+# Architecting Digital Systems
 
-One file per session. Clone it, run it, read the PASS/FAIL lines, fill in the
-TODOs.
+The lab exercises. One file per session, and each one is a small system that
+already works - your job is what happens to it when someone asks for a change.
 
-    git clone <this repo>
+    git clone https://github.com/dilyanatanasov/ads-course.git
     cd ads-course
     python 04_strategy.py
 
-**Python 3.8+ and nothing else.** No pip install, no test framework, no Docker,
-no database server, no internet. Standard library only. There is nothing to
-set up - if `python --version` works, you are ready.
+## Setup
+
+There isn't any. If `python --version` prints 3.8 or higher, you are ready.
+
+No pip install, no test framework, no Docker, no database server, no internet.
+Standard library only. If a session ever asks you to install something, that is
+a bug - report it.
+
+## How to run a session
+
+    python 04_strategy.py
+
+You get PASS and FAIL lines. That is the whole test framework - `check.py` is
+20 lines, and you are welcome to read it. A session is finished when every
+line says PASS.
+
+A file full of FAIL lines on the first run is the normal starting state, not a
+broken download.
 
 ## How a session works
 
-Every file has the same five parts, in this order:
+Every file has the same five parts, in this order. Read them in order.
 
-    THE PAIN              why the code you are about to write exists
-    BUILD IT TOGETHER     the steps we type on the projector, with the WHY
-                          for each one
-    YOUR JOB              what you finish in pairs
-    THE TWIST             the change request that arrives once it works
-    THE DOWNSIDE          what this pattern costs you
+**THE PAIN** - why the thing you are about to build exists. Usually a change
+request that is annoying to make in the code as it stands. Sit with the
+annoyance for a minute; it is the point.
 
-**We write the checks first.** From session 02 on, the bottom of each file
-gives you the first check already written - the one we do together - and then
-a commented list of the rest for you to write. Write the check, run it, watch
-it fail, then write the code that makes it pass.
+**BUILD IT TOGETHER** - the steps we type on the projector, with the reason for
+each one. This is in the file so you can catch up if you lose the thread, and
+so you still have the reasoning next week when the room is not there. If you
+missed a class, start here.
 
-That order is not ceremony. Several sessions contain a check that is
-*impossible to write* against the starting code - session 02 is the clearest -
-and discovering that is the lesson. A design problem announces itself as a
-test you cannot write, long before it announces itself as a bug.
+**YOUR JOB** - what you finish in pairs.
+
+**THE TWIST** - the change request that arrives once it already works. This is
+where you find out whether the design actually bought you anything.
+
+**THE DOWNSIDE** - what this pattern costs. Every single session has one.
+
+That last part matters more than it looks. Every pattern here is a trade, and a
+developer who only ever learned the upside is how codebases end up with a
+factory in front of everything. If you can't say what a pattern costs, you
+don't know it yet.
+
+## Write the checks first
+
+From session 02 on, the bottom of each file gives you one check already
+written - the one we do together - and then a commented list of the rest for
+you to write yourself.
+
+For each one: **write the check, run it, watch it fail, then write the code
+that makes it pass.** In that order.
+
+This is not ceremony. A check you never saw fail is a check you have no reason
+to trust - it might be passing by accident. And several sessions contain a
+check that is *impossible to write* against the starting code. Session 02 is
+the clearest: you cannot ask "what happens after the deadline?" without
+changing your computer's clock. The check didn't fail, it couldn't be written,
+and that is what a design problem looks like before it becomes a bug.
 
 If you and your pair disagree about an expected value, settle that argument
-before writing any implementation. The argument *is* the exercise.
+before you write any implementation. The argument is the exercise. Deciding
+what the code *should* do is the harder half of the job, and it is the half
+that gets skipped.
 
-## Layout
+## When you are stuck
 
-    *.py          the sessions - this is what you clone
-    reveal/       the worked answers, pushed after each session runs
-    check.py      the PASS/FAIL printer. The only shared file.
+1. Re-read BUILD IT TOGETHER. The reasoning for each step is there.
+2. Read the check that is failing and say out loud what it is asking for.
+3. Check the TODO comments - they usually name the exact expected string.
+4. Ask. Being stuck for twenty minutes on a typo teaches you nothing.
 
-`reveal/` is committed but fills up as the semester goes: each session's answer
-appears after that session has run. `git pull` to get it.
+## Answers
 
-Run any file from the folder it lives in:
+`reveal/` holds the worked answers, one session at a time, published after that
+session has run. `git pull` to get the latest.
 
-    python 04_strategy.py
-    cd reveal && python 04_strategy_solution.py
+Compare it with what you wrote rather than reading it first. If yours passes
+and looks different, that is often fine - and worth asking about.
 
-## Sessions with code
+## Sessions
 
     01  baseline monolith     three change requests; your OOP diagnostic
     02  seams                 hardcoded clock, print and fee rule -> parameters
@@ -70,88 +108,28 @@ Run any file from the folder it lives in:
     23  queue + worker        a message queue made of files
     24  services              three processes on localhost, no Docker
 
-Still to write (12): 05 strategy II, 11 facade, 18 service layer, 19 DTOs,
-20 DI container, 21 ports and adapters, 25 shared database, 26 API gateway,
-27 failure modes, 28 eventual consistency, 29 scenario workshop,
-30 defend your architecture. Sessions 29 and 30 need no code at all - they run
-on whatever you built during the semester.
-
 Two exceptions to one-file-per-session, both deliberate:
 
 - **Session 16** is four files (`16_domain`, `16_application`,
   `16_infrastructure`, `16_layers`) because separated layers *are* the lesson.
-- **Sessions 23 and 24** take a mode argument so one file can be several
-  processes: `python 24_services.py students`.
+- **Sessions 23 and 24** take a mode argument, so one file can be several
+  processes at once:
+
+      python 24_services.py students
 
 Sessions 16 and 24 have no TODOs. They are complete working code that you read
-and then deliberately break, so there is nothing to solve.
-
-## Session shape (50-60 min)
-
-| Min | What |
-|---|---|
-| 0-8 | Run it. Take a change request. Feel the pain. Do not name the pattern. |
-| 8-23 | BUILD IT TOGETHER. Checks first, then code, one step at a time. |
-| 23-45 | Pairs write the remaining checks and make them pass. |
-| 45-55 | The twist, then **the downside**. |
-| 55-60 | Buffer. |
-
-**Do not skip the downside.** Every docstring names a real cost. Students who
-only learn the upside become the developers who put a factory in front of
-everything.
+and then deliberately break - which is a different skill, and one you will use
+more often than you expect.
 
 ## The through-line
 
+These are not 30 unrelated patterns.
+
 04 Strategy becomes feature flags. 08 Observer becomes 22's event bus becomes
 23's queue. 11 Facade becomes 24's API gateway. 15 Repository becomes "each
-service owns its data" in 24. When you hear "an API gateway is a Facade with a
-network in it", you already own the idea.
+service owns its data" in 24.
 
----
-
-## For whoever is teaching this
-
-`solutions/` is gitignored and never reaches GitHub. It is the source of truth;
-`reveal/` is **generated** from it:
-
-    python build_reveal.py            rebuild everything
-    python build_reveal.py 04         one session
-    python build_reveal.py --check    fail if reveal/ is stale, write nothing
-
-Teacher-only content lives in marked blocks and is stripped on the way out:
-
-    <<<TEACHER
-    Blast radius: CR-1 touches 1 place, CR-2 touches 3.
-    Do not say "Strategy" out loud today.
-    TEACHER>>>
-
-    x = 1     # TEACHER: they always get this wrong, wait for it
-
-Never edit `reveal/` by hand - it is overwritten. Run `build_reveal.py` after
-touching a solution and commit the result, or students pull an answer that
-does not match the code.
-
-`reveal/` is **gitignored by default**, so a stray `git add .` cannot leak the
-whole semester in one commit. Publishing session NN, after you have taught it:
-
-    python build_reveal.py NN
-    git add -f reveal/NN_*.py
-    git commit -m "reveal: session NN" && git push
-
-The `-f` is only needed the first time each file is published; after that git
-tracks it normally.
-
-Keep `solutions/` backed up somewhere yourself. Because it is gitignored, this
-repo is not backing it up for you.
-
-### Before you teach, and before you push
-
-    python verify.py              everything (~20s)
-    python verify.py --fast       skip session 24's three processes
-
-Checks that every solution runs green, that the no-TODO sessions (01, 16, 24)
-are green as students receive them, that every task file parses, that `reveal/`
-is not stale, and that `solutions/` has not leaked into git.
-
-Session 24 was broken for weeks because the only thing that would have caught
-it was somebody running that one file. This is that somebody. Run it.
+So when you hear "an API gateway is a Facade with a network in it", you already
+own the idea - you wrote it in week 6. Most of the distributed systems material
+late in the course is something you already built, with a network dropped in
+the middle of it.
