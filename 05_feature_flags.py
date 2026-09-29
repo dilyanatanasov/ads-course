@@ -33,13 +33,13 @@ THE GOAL
        Read it once at construction and the only way to change a flag is to
        restart, which is the one thing a flag exists to avoid.
 
-    2. bucket_of() must give the SAME answer in every process. Start with the
-       obvious version, hash(subject) % 100, then run this twice:
+    2. bucket_of() must give the SAME answer in every process. Write it with
+       hash(subject) % 100 first and watch the last check fail - then run:
 
            python -c "print(hash('s001') % 100)"
 
-       Two different numbers. Python randomises string hashing per process,
-       so two servers would put the same student in different buckets and the
+       twice, and see why. Python randomises string hashing per process, so
+       two servers would put the same student in different buckets and the
        feature would flicker on and off depending on which one answered.
        Use hashlib instead. "It worked on my machine" and "it works" are
        different claims.
@@ -121,8 +121,11 @@ class FeatureFlags:
         self._flags[name] = value
 
     def is_on(self, name, subject=None):
-        # TODO: missing -> False. True/False -> itself.
-        # {"percent": n} -> bucket_of(subject, name) < n
+        # A flag is one of three things. Handle them in this order:
+        #   never set        -> False   (a typo in config must mean OFF)
+        #   True or False    -> itself
+        #   {"percent": n}   -> bucket_of(subject, name) < n
+        # No special case for 0 or 100 - work out why not. Buckets are 0-99.
         raise NotImplementedError
 
 
@@ -159,9 +162,7 @@ def demo():
         ("never set (absent)",      "absent"),
         ("set to False",            False),
         ("set to True",             True),
-        ('{"percent": 0}',          {"percent": 0}),
-        ('{"percent": 100}',        {"percent": 100}),
-        ('{"percent": 50}',         {"percent": 50}),
+        ('{"percent": 30}',         {"percent": 30}),
         ("name misspelled in config", "typo"),
     ]
 
@@ -186,9 +187,9 @@ def demo():
     print("  error is ever printed.")
     print()
 
-    flags = FeatureFlags({NEW_GRADING: {"percent": 50}})
+    flags = FeatureFlags({NEW_GRADING: {"percent": 30}})
     book = Gradebook(flags, current=BulgarianScale(), candidate=Percentage())
-    print("  At 50 percent, the SAME flag gives different students different")
+    print("  At 30 percent, the SAME flag gives different students different")
     print("  rules - and the same student always gets the same one:")
     for sid in ("s001", "s002", "s003", "s004", "s005"):
         print(f"      {sid}  bucket {bucket_of(sid, NEW_GRADING):>2}  "
@@ -210,26 +211,21 @@ if __name__ == "__main__":
     flags.set(NEW_GRADING, True)
     check("flag on, same object", book.grade("s001", 73), "73%")
 
-    # YOUR TURN - write one check for each, then make them pass:
-    #   unknown flag is off             nothing set -> the OLD rule
-    #   flipped back with no restart    set it False on the SAME objects
-    #   0 percent reaches nobody        {"percent": 0}, across 200 students
-    #   100 percent reaches everybody   {"percent": 100}
-    #   same student, same answer       at 50%, grade s001 fifty times
-    #   50 percent splits the cohort    count of 200 - check a RANGE, not an
-    #                                   exact number. A hash is not a shuffle.
-    #
-    # The 200 students are f"s{i:03d}" for i in range(200).
+    # YOUR TURN - two checks, then make them pass:
+    #   unknown flag is off             a FRESH FeatureFlags, nothing set,
+    #                                   grade s001 on 73 -> the OLD rule
+    #   flipped back with no restart    set it False on the SAME objects and
+    #                                   grade again. This is the 7am phone call.
 
-    # ---- GIVEN, and it is the whole point of the session -------------------
-    # These three numbers are not from your machine. They are from mine, and
-    # from the server, and from the laptop of whoever runs this in 2031.
-    # A rollout is only meaningful if every process agrees who is in it -
-    # otherwise the same student sees the feature appear and disappear
-    # depending on which server answered.
+    # ---- GIVEN, and it is the point of the session -------------------------
+    # 56 is not a number from your machine. It is the number from every
+    # machine, forever, because sha256 gives the same answer in every process.
+    # A rollout only means something if all your servers agree who is in it.
     #
-    # This check CANNOT pass with hash(). Try it: run it twice and watch the
-    # numbers change. Then look up hashlib.
-    check("same buckets on every machine, in every process",
-          [bucket_of(s, NEW_GRADING) for s in ("s001", "s002", "s003")],
-          [17, 98, 19])
+    # This CANNOT pass with hash(). Write bucket_of with hash() first, run it
+    # twice, and watch the number change. Then look up hashlib.
+    flags.set(NEW_GRADING, {"percent": 30})
+    rolled = sum(1 for i in range(200)
+                 if book.grade(f"s{i:03d}", 73) == "73%")
+    check("30 percent rolls out the same way on every machine", rolled, 56)
+    print(f"        (rolled out to {rolled} of 200)")
