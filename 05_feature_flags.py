@@ -64,6 +64,11 @@ import hashlib
 from abc import ABC, abstractmethod
 from check import check
 
+# The one flag this session uses. A NAME, not a magic string typed out in
+# several places - because a typo in a flag name is a flag that silently
+# never turns on, and nothing will tell you.
+NEW_GRADING = "new_grading"
+
 
 class GradingStrategy(ABC):
     @abstractmethod
@@ -126,7 +131,9 @@ class Gradebook:
         self.candidate = candidate
 
     def strategy_for(self, student_id):
-        raise NotImplementedError    # TODO: ask the flags. On EVERY call.
+        # TODO: ask self.flags whether NEW_GRADING is on for this student.
+        # On -> self.candidate. Off -> self.current. Ask on EVERY call.
+        raise NotImplementedError
 
     def grade(self, student_id, score):
         raise NotImplementedError    # TODO
@@ -140,7 +147,7 @@ if __name__ == "__main__":
     # ---- STEP 1: the check we wrote first ---------------------------------
     # The Gradebook above was built BEFORE this line runs, and is never
     # rebuilt. If you read the flag in __init__, this cannot pass.
-    flags.set("new_grading", True)
+    flags.set(NEW_GRADING, True)
     check("flag on, same object", book.grade("s001", 73), "73%")
 
     # YOUR TURN - write one check for each, then make them pass:
