@@ -28,34 +28,38 @@ broken download.
 
 ## How a session works
 
-Every file has the same five parts, in this order. Read them in order.
+Read the docstring at the top of the file first. All of them are laid out the
+same way:
 
-**THE PAIN** - why the thing you are about to build exists. Usually a change
-request that is annoying to make in the code as it stands. Sit with the
-annoyance for a minute; it is the point.
+**THE SITUATION** - the concrete problem someone at the university actually
+has. Sit with it for a minute; the annoyance is the point.
 
-**BUILD IT TOGETHER** - the steps we type on the projector, with the reason for
-each one. This is in the file so you can catch up if you lose the thread, and
-so you still have the reasoning next week when the room is not there. If you
-missed a class, start here.
+**THE IDEA** - what you are about to build, in two or three sentences.
 
-**YOUR JOB** - what you finish in pairs.
+**YOUR TASK** - a numbered list. Everything you need to finish the session,
+and nothing optional.
 
-**THE TWIST** - the change request that arrives once it already works. This is
-where you find out whether the design actually bought you anything.
-
-**THE DOWNSIDE** - what this pattern costs. Every single session has one.
+**THE COST** - what this pattern charges you in return. Every session has one.
 
 That last part matters more than it looks. Every pattern here is a trade, and a
 developer who only ever learned the upside is how codebases end up with a
 factory in front of everything. If you can't say what a pattern costs, you
 don't know it yet.
 
+Three sessions - 03, 16 and 24 - say **NOTHING TO IMPLEMENT TODAY**. Those are
+complete working code that you read, measure, and deliberately break. There is
+nothing to fix, and that is a different skill you will use more often than you
+expect.
+
+Eight sessions warn that **the first run looks broken**. You get a traceback
+rather than PASS/FAIL, because the methods start out raising
+`NotImplementedError`. Read the last line of the traceback - it names the
+method to write first.
+
 ## Write the checks first
 
 From session 02 on, the bottom of each file gives you one check already
-written - the one we do together - and then a commented list of the rest for
-you to write yourself.
+written, then a commented list of the rest for you to write yourself.
 
 For each one: **write the check, run it, watch it fail, then write the code
 that makes it pass.** In that order.
@@ -117,10 +121,6 @@ Two exceptions to one-file-per-session, both deliberate:
   processes at once:
 
       python 24_services.py students
-
-Sessions 16 and 24 have no TODOs. They are complete working code that you read
-and then deliberately break - which is a different skill, and one you will use
-more often than you expect.
 
 ## The through-line
 
