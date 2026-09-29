@@ -1,0 +1,29 @@
+# The teacher's copy. Never goes to GitHub.
+solutions/
+
+# reveal/ is generated locally in full, but published ONE SESSION AT A TIME.
+# Ignored by default so a stray `git add .` cannot leak the whole semester.
+# To publish session NN after teaching it:
+#     python build_reveal.py NN
+#     git add -f reveal/NN_*.py
+#     git commit -m "reveal: session NN" && git push
+# Once a file is force-added, git tracks it normally from then on.
+reveal/
+
+# Generated at runtime by sessions 23 and 24
+students_db/
+courses_db/
+check-queue/
+queue/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+.DS_Store
