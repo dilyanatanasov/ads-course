@@ -1,65 +1,45 @@
 """SESSION 17 - MVC, with no framework.
 
-    python 17_mvc.py          run the checks
-    python 17_mvc.py serve    real web server on http://localhost:8000/courses
+    python 17_mvc.py          the checks
+    python 17_mvc.py serve    a real web server on http://localhost:8000/courses
 
-WHY NO FRAMEWORK
-    A framework would do the interesting part for you. Python's standard
-    library has an HTTP server. 80 lines and you own every piece.
+THE SITUATION
+    You need a web page listing courses, filterable by faculty, showing which
+    are full. A framework would do the interesting part for you. Python's
+    standard library has an HTTP server, so 80 lines and you own every piece.
 
 THE THREE PARTS
-    Model      data and rules. Does not know the web exists.
-    View       data -> HTML. No decisions.
-    Controller reads the request, calls the model, picks a view.
+    Model       data and rules. Does not know the web exists.
+    View        data in, HTML out. Makes no decisions.
+    Controller  reads the request, asks the model, picks a view.
 
-BUILD IT TOGETHER (15 min - we write this on the projector, you type along)
-    STEP 1  Write the escaping check FIRST, before any HTML exists:
-                nasty = Catalog([Course("x", "<script>", "informatics", 5)])
-                page = CourseController(nasty).index({"query": {}})
-                check("view escapes html", "<script>" in page["body"], False)
-            WHY THIS ONE BEFORE THE PRETTY ONES: it is the only check here
-            that is a security bug if it fails. Write it first and the view
-            is born escaping. Write it last and you are retrofitting
-            html.escape() into a template you have already got attached to -
-            which is exactly how this bug reaches production everywhere.
+FIRST RUN LOOKS BROKEN. IT IS NOT.
+    You get a traceback instead of PASS/FAIL, because the methods below raise
+    NotImplementedError until you write them. The last line of the traceback
+    names the method to start with.
 
-    STEP 2  is_full and seats_left on Course - in the MODEL, not the view.
-            WHY THERE: the view asks "is this full" and does not get to have
-            an opinion. Put that comparison in the template and a CLI
-            written next month cannot reuse it. This is the twist below,
-            and we are dodging it on purpose so everyone can feel the
-            difference later.
+YOUR TASK (25 min)
+    1. Course.is_full and Course.seats_left - in the MODEL, not the view.
+    2. Catalog.by_faculty.
+    3. course_list() - a table. Status is "FULL" or "N left". ESCAPE every
+       value that came from outside.
+    4. CourseController.index (with ?faculty=) and .show (404 when missing).
+    5. Write the five remaining checks at the bottom.
 
-    STEP 3  course_list(). Data in, HTML string out, and NO decisions.
-            WHY "no decisions" is a rule and not a style: the moment a view
-            decides something, that decision is only true for people
-            arriving over HTTP.
+    The escaping check is the one to write FIRST. It is the only one here that
+    is a security hole if it fails, and writing it first means the view is
+    born escaping instead of having html.escape() retrofitted into a template
+    you have grown attached to.
 
-    STEP 4  CourseController.index. Takes a dict, returns a dict.
-            WHY A DICT AND NOT A REAL REQUEST OBJECT: because then you can
-            check the controller with no server running, which is what every
-            check below does. Session 02's seam, at the edge of the web.
+    The controller takes a dict and returns a dict, so you can check it with
+    no server running. That is deliberate - it is session 02's seam at the
+    edge of the web.
 
-    STEP 5  Run `python 17_mvc.py serve` and open it in a browser. Same
-            controller, same code, real HTTP.
-            WHY BOTHER: it proves the dict was not a toy. The checks were
-            exercising the real thing all along.
-
-YOUR JOB (25 min)
-    1. Finish Course.is_full / seats_left and Catalog.by_faculty.
-    2. Finish course_list() - it must ESCAPE user text.
-    3. Finish CourseController.index (with ?faculty=) and .show (404 path).
-    Note the controller takes a dict and returns a dict, so you can check it
-    with no server running. That is deliberate.
-
-THE TWIST (next session's whole topic)
-    Put "is this course full" logic in the controller. It works. Now add a CLI
-    that needs the same rule. You cannot reuse it - it is trapped in the web
-    layer. That is the fat controller problem.
-
-THE DOWNSIDE
-    MVC says nothing about where business logic goes. Every fat-controller
-    codebase you will inherit was written by someone following MVC correctly.
+THE COST
+    MVC says nothing about where business logic goes. Put "is this course
+    full" in the controller and it works - until a CLI needs the same rule
+    and cannot reach it. Every fat-controller codebase you will inherit was
+    written by someone following MVC correctly.
 """
 import html
 import sys
@@ -163,30 +143,17 @@ if __name__ == "__main__":
         page = CourseController(nasty).index({"query": {}})
         check("view escapes html", "<script>" in page["body"], False)
 
-        # ---- NOW YOU WRITE THE REST --------------------------------------
-        # Build a CourseController(Catalog()) and check:
-        #
-        #   "index status"            page["status"] for an empty query
-        #   "index lists everything"  "Roman Law" appears in page["body"]
-        #
-        #   "filters by faculty"      with {"query": {"faculty": "law"}},
-        #                             Roman Law is present AND Databases is
-        #                             absent. Check BOTH IN ONE check, as a
-        #                             tuple.
-        #                             WHY BOTH: "the filter shows law" also
-        #                             passes for a filter that shows
-        #                             everything. A filter is only proven by
-        #                             what it LEAVES OUT.
-        #
-        #   "missing course is 404"   controller.show with id "nope".
-        #                             WHY A STATUS AND NOT AN EXCEPTION: on
-        #                             the web, "not found" is a normal
-        #                             answer, not a crash. The controller's
-        #                             job is turning an absence into a
-        #                             response.
-        #
-        #   "full course marked"      "FULL" appears in the index body.
+        # YOUR TURN - build a CourseController(Catalog()) and write one
+        # check for each, then make them pass:
+        #   index status              page["status"] for an empty query
+        #   index lists everything    "Roman Law" is in page["body"]
+        #   filters by faculty        with {"faculty": "law"}, Roman Law is
+        #                             present AND Databases is absent. Check
+        #                             BOTH in one check, as a tuple - a
+        #                             filter is only proven by what it
+        #                             leaves out.
+        #   missing course is 404     controller.show with id "nope". On the
+        #                             web, "not found" is a normal answer,
+        #                             not a crash.
+        #   full course marked        "FULL" appears in the index body -
         #                             Databases is 30 of 30.
-        #
-        # STRETCH: add ?faculty=nosuchfaculty. What SHOULD happen - empty
-        #          table, or 404? Decide, write the check, then implement.

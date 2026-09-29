@@ -1,67 +1,49 @@
-"""SESSION 24 - Microservices in three terminal windows. No Docker.
+"""SESSION 24 - Microservices in three terminals. No Docker.
 
     python 24_services.py students   # terminal 1, port 8001
     python 24_services.py courses    # terminal 2, port 8002
     python 24_services.py gateway    # terminal 3, port 8000
     curl http://127.0.0.1:8000/enrolment?student=s001
 
-    python 24_services.py            # checks: starts all three itself
+    python 24_services.py            # the checks: starts all three itself
 
-WHY THIS COUNTS AS DISTRIBUTED
-    Three processes, own SQLite file each, talking over HTTP. Network calls,
-    independent deployment, partial failure, separate data. Every property
-    that matters.
+NOTHING TO IMPLEMENT TODAY
+    No TODOs. You run it, read it, then kill a service while it is serving.
 
-READ IT TOGETHER (20 min - no TODOs today, and that is deliberate)
-    STEP 1  Three terminals, three commands, before any explanation. Then
-            curl the gateway.
-            WHY START BY RUNNING IT: "microservices" sounds like a thing you
-            need a platform team for. It is three processes and a port
-            number. Deflate it first, respect it afterwards.
+THE SITUATION
+    Three processes, each owning its own SQLite file, talking over HTTP. That
+    is enough for every property that matters: network calls, independent
+    deployment, partial failure, separate data.
 
-    STEP 2  Look at db() and count the databases. Two, in two folders.
-            Now try to make the students service answer a question about
-            course titles. You cannot - it has no table for them and no
-            connection to the other one.
-            WHY THE ENFORCEMENT IS PHYSICAL: in session 16 the dependency
-            rule needed a check to enforce it. Here a separate PROCESS
-            enforces it. Nobody can take a shortcut, because the shortcut
-            does not exist. That is the real thing you are buying.
+YOUR TASK (25 min)
+    1. Start all three and curl the gateway. It sounds like something you need
+       a platform team for; it is three processes and a port number.
 
-    STEP 3  Read the HOST and CLIENT_TIMEOUT comments at the top of this
-            file. Both were real bugs in this exact file, and both are
-            failure modes that do not exist in a single program.
+    2. Look at db() and count the databases. Two, in two folders. Now try to
+       make the students service answer a question about course titles. You
+       cannot - it has no such table and no connection to the other one.
+       In session 16 the dependency rule needed a check to enforce it. Here a
+       separate PROCESS enforces it, and nobody can take the shortcut because
+       the shortcut does not exist.
 
-    STEP 4  Read enrolment() and find the two fetches. One failure is fatal,
-            the other is not.
-            WHY THAT ASYMMETRY IS A DESIGN DECISION, NOT A DETAIL: somebody
-            decided a student's page is still worth showing without course
-            TITLES, but worthless without the student. Ask the room whether
-            they agree. There is no technical answer - it is a product
-            judgement that you are now required to make, in code, because
-            you split the system up.
+    3. Read the HOST and CLIENT_TIMEOUT comments at the top. Both were real
+       bugs in this file, and both are failure modes that cannot exist in a
+       single program.
 
-    STEP 5  Kill terminal 2 while the page is loading. Watch it degrade.
-            Then read the "warning" field in the JSON.
-            WHY THE WARNING MATTERS: the response is incomplete AND SAYS SO.
-            A degraded answer that pretends to be a full one is worse than
-            an error.
+    4. Read enrolment() and find the two fetches. One failure is fatal, the
+       other is not. Somebody decided a page is still worth showing without
+       course TITLES but worthless without the student. Do you agree? There is
+       no technical answer - it is a product judgement you are now forced to
+       make in code, because you split the system up.
 
-YOUR JOB (25 min)
-    1. Read it. Note each service owns its own database and cannot read the
-       other's.
-    2. Add a course to the courses service. The students service neither knows
-       nor cares.
-    3. NOW BREAK IT: kill terminal 2 and call the gateway again.
-       - What does the user see? How long did they wait?
-       - Should the whole page fail because course NAMES are missing?
+    5. NOW BREAK IT: kill terminal 2 and call the gateway again.
+       What does the user see? How long did they wait? Read the "warning"
+       field - the answer is incomplete AND SAYS SO, which is the only
+       honest way to degrade.
 
-    The gateway already degrades gracefully - read `enrolment()` and see how.
-    Compare with session 01, where this failure mode could not exist.
-
-THE DOWNSIDE, IN ONE SENTENCE
-    You turned a function call that could not fail into a network call that can
-    fail in eight ways, on purpose - so know what you bought.
+THE COST, IN ONE SENTENCE
+    You turned a function call that could not fail into a network call that
+    can fail in eight ways, on purpose - so know what you bought.
 """
 import json
 import os

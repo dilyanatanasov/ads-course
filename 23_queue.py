@@ -1,68 +1,47 @@
 """SESSION 23 - A message queue made of files.
 
-    python 23_queue.py            checks
-    python 23_queue.py worker     run a worker (terminal 1)
-    python 23_queue.py produce 5  enqueue 5 messages (terminal 2)
+    python 23_queue.py            the checks
+    python 23_queue.py worker     run a worker      (terminal 1)
+    python 23_queue.py produce 5  enqueue 5 jobs    (terminal 2)
     python 23_queue.py crash      at-least-once delivery, demonstrated
 
-WHY A FOLDER OF FILES
-    Because you can open it. A real broker hides the interesting part behind a
-    daemon; a folder lets you watch messages appear, get claimed and vanish.
-    Everything here transfers to RabbitMQ, SQS and Kafka.
+THE SITUATION
+    Charging 4000 students at the end of term cannot happen inside a web
+    request. You need to hand the work to something else and let it get on
+    with it.
 
-BUILD IT TOGETHER (15 min - we write this on the projector, you type along)
-    STEP 1  Open the queue/ folder in a file manager and leave it on screen
-            all session.
-            WHY: this is the only broker you will ever use that you can
-            WATCH. Every idea today is true of RabbitMQ, SQS and Kafka - you
-            just cannot see them do it.
+    So: a folder of files. Open it in a file manager and leave it on screen -
+    this is the only broker you will ever use that you can WATCH. Everything
+    here is true of RabbitMQ, SQS and Kafka; they just hide it behind a daemon.
 
-    STEP 2  Write the double-claim check before claim() exists:
-                q.enqueue(...); msg = q.claim()
-                check("two workers cannot claim the same message",
-                      q.claim(), None)
-            WHY THIS ONE FIRST: it is the entire reason a queue is harder
-            than a list. Two workers, one message, and the wrong answer is
-            charging a student twice.
+FIRST RUN LOOKS BROKEN. IT IS NOT.
+    You get a traceback instead of PASS/FAIL, because the methods below raise
+    NotImplementedError until you write them. The last line of the traceback
+    names the method to start with.
 
-    STEP 3  enqueue(): uuid in the filename, JSON in the file.
-            WHY A UUID AND NOT A COUNTER: two producers running at once both
-            think they are writing message 4. A counter needs coordination;
-            a uuid needs nothing. Prefer the design with no shared state
-            over the one that needs a lock.
+YOUR TASK (25 min)
+    1. enqueue(payload) - a uuid in the filename, JSON in the file.
+       A uuid, not a counter: two producers both think they are writing
+       message 4. A counter needs coordination; a uuid needs nothing.
+    2. claim() - os.rename the file into processing/.
+       RENAME, not read-then-delete. Rename within one filesystem is ATOMIC:
+       the OS guarantees exactly one of two racing workers wins.
+       Read-then-delete has a gap between the two steps, and the gap is where
+       the second worker gets in.
+    3. ack(message) - delete it from processing/.
+    4. recover() - move orphans back to ready/, return how many.
+    5. IdempotentLedger.charge - no-op if that message id was already applied.
+    6. Write the six remaining checks at the bottom.
 
-    STEP 4  claim(): os.rename into processing/. Not read-then-delete.
-            WHY RENAME IS THE WHOLE TRICK: rename within one filesystem is
-            ATOMIC - the OS guarantees exactly one of two racing workers
-            wins and the other gets an error. Read-then-delete has a gap
-            between the two, and a gap is where the second worker gets in.
-            You are not being clever here, you are borrowing a guarantee
-            somebody else already proved.
-
-    STEP 5  ack() deletes; recover() moves orphans back.
-            Then run `python 23_queue.py crash` together.
-            WHY IT IS THE POINT OF THE SESSION: the worker dies AFTER doing
-            the work, BEFORE acking. The message comes back. The work
-            happens twice. That is AT-LEAST-ONCE DELIVERY, every real queue
-            gives you it, and the fix is NOT in the queue - it is that your
-            handler must be idempotent. Compare Ledger with
-            IdempotentLedger and say out loud which one you would deploy.
-
-YOUR JOB (25 min)
-    1. enqueue() - write a JSON file with a unique name
-    2. claim()   - RENAME the file into processing/. Rename is atomic on one
-                   filesystem, so two workers cannot claim the same message.
-    3. ack() deletes it. recover() puts orphans back.
-    4. Start two workers at once and prove no message is processed twice.
-
-THE EXERCISE THAT MATTERS
+THE PART THAT MATTERS
     Run `python 23_queue.py crash`. The worker dies AFTER doing the work but
     BEFORE acking. The message comes back. The work happens twice.
 
-    That is AT-LEAST-ONCE DELIVERY and every real queue gives you it. The fix
-    is not in the queue - it is your handler being IDEMPOTENT.
+    That is AT-LEAST-ONCE DELIVERY, every real queue gives you it, and the fix
+    is NOT in the queue - it is your handler being idempotent. Compare Ledger
+    with IdempotentLedger and say out loud which one you would deploy.
 
-THE DOWNSIDE
+THE COST
     You now have a system where "it succeeded" and "we know it succeeded" are
     different facts. Every distributed system lives with this permanently.
 """
@@ -190,33 +169,28 @@ if __name__ == "__main__":
         msg = q.claim()
         check("two workers cannot claim the same message", q.claim(), None)
 
-        # ---- NOW YOU WRITE THE REST --------------------------------------
-        #   "enqueue then claim"     msg["payload"]["student"]
-        #   "claim removes from ready"
-        #                            q.depth() after the claim above
-        #   "ack deletes"            q.ack(msg), then list
-        #                            check-queue/processing - it must be []
+        # YOUR TURN - write one check for each, then make them pass:
+        #   enqueue then claim         msg["payload"]["student"]
+        #   claim removes from ready   q.depth() after the claim above
+        #   ack deletes                q.ack(msg), then list
+        #                              check-queue/processing - must be []
         #
-        # ---- then the part that matters --------------------------------
-        #   "crash redelivers"
-        #       enqueue something, claim it, and NEVER ack - that is exactly
-        #       what a crashed worker leaves behind. q.recover() must return
-        #       how many it rescued.
-        #   "redelivered message is claimable"
-        #       and the rescued message can be claimed again.
-        #
-        #   "naive handler double charges"
-        #       Ledger, same charge twice -> len(charges). Write down the
-        #       number you EXPECT before you run it, and notice that the
-        #       expected number here is the bug. This check does not
-        #       describe correct behaviour; it pins down broken behaviour so
-        #       the next two lines can show the fix.
-        #
-        #   "idempotent handler does not"
-        #       IdempotentLedger, same message_id twice -> len(charges).
-        #       WHY THE MESSAGE ID IS THE ARGUMENT THAT MATTERS: the queue
-        #       cannot promise once-only delivery - no queue can. It can
-        #       only promise the id stays the same across redeliveries. The
-        #       handler turns that promise into safety. Delivery is the
-        #       queue's job; idempotency is yours.
-        shutil.rmtree("check-queue", ignore_errors=True)
+        # Then the part that matters:
+        #   crash redelivers           enqueue, claim, and NEVER ack - that
+        #                              is exactly what a crashed worker
+        #                              leaves behind. q.recover() returns
+        #                              how many it rescued.
+        #   redelivered is claimable   and it can be claimed again
+        #   naive handler double charges
+        #                              Ledger, same charge twice. Note the
+        #                              expected number here IS the bug -
+        #                              this check pins down broken
+        #                              behaviour so the next line can show
+        #                              the fix.
+        #   idempotent handler does not
+        #                              IdempotentLedger, same message_id
+        #                              twice. The queue cannot promise
+        #                              once-only delivery - no queue can.
+        #                              It can only promise the id stays the
+        #                              same. Your handler turns that into
+        #                              safety.

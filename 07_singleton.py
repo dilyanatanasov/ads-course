@@ -1,46 +1,33 @@
-"""SESSION 07 - Singleton, and why your tests will hate you.
+"""SESSION 07 - Singleton, and why it breaks your tests.
 
     python 07_singleton.py
 
-The only session where the goal is to build something and then regret it.
+THE SITUATION
+    The textbook singleton is below: one Database, shared by everyone who
+    asks for it. Plenty of real code looks exactly like this.
 
-PART 1 (10 min) - run it
-    The textbook singleton is below. Lots of real code looks exactly like this.
-    Run the file. Watch the second check FAIL - not because the code is wrong,
-    but because state outlived the thing that owned it.
+    Run it. The second check FAILS - and not because the code is wrong. Both
+    scenarios are correct on their own. Ivan leaked from the first into the
+    second, because the database outlived the thing that owned it.
 
-BUILD IT TOGETHER (12 min)
-    STEP 1  Run it before changing anything. Read the FAIL line carefully:
-            scenario B expected an empty database and found Ivan in it.
-            WHY READ THE FAILURE OUT LOUD: nobody wrote a bug. Every line is
-            correct on its own. The defect is that two things that should
-            know nothing about each other are quietly sharing a variable.
-            That is the only kind of bug that survives a code review.
+    Before you fix anything, answer out loud: WHO decided that StudentService
+    uses that database? StudentService did, in its own constructor, where no
+    caller can see it or change it. A dependency you cannot see is one you
+    cannot replace - and a test is just another caller wanting to replace
+    something.
 
-    STEP 2  Ask before fixing: WHO decided StudentService uses that database?
-            StudentService did, in its own constructor, where no caller can
-            see it or change it. A dependency you cannot see is a dependency
-            you cannot replace - and a test is just another caller that wants
-            to replace something.
+THE IDEA
+    Stop letting the class choose. Pass the database IN. Build it once at the
+    edge of the program and hand it down.
 
-    STEP 3  Delete `Database()` from the constructor. Take `db` as a
-            parameter instead. Four characters of typing.
-            WHY THIS IS THE WHOLE OF DEPENDENCY INJECTION: that is it. That
-            is the pattern. Every DI container you will ever meet is
-            machinery for doing this at a scale where doing it by hand hurts.
-            You are not learning a framework today, you are learning the
-            thing frameworks automate.
-
-    STEP 4  Build the Database once, in main(), and hand it down.
-            WHY THE EDGE OF THE PROGRAM: somebody has to choose the real
-            thing. Push that decision to the outermost layer and everything
-            inside stays swappable. Session 16 gives this a name.
-
-PART 2 (25 min) - fix it
-    Rewrite StudentService so the database is passed IN (look for TODO).
-    Construct it once at the edge of the program and hand it down.
     That habit has a fancy name - dependency injection - and you are about to
-    write it by hand in four lines.
+    write it by hand in four lines. Every DI framework you will meet is
+    machinery for doing this at a scale where doing it by hand hurts.
+
+YOUR TASK (25 min)
+    1. StudentService takes `db` as a constructor parameter (see the TODO).
+    2. Build the Database once in __main__ and pass it in.
+    3. The two scenarios must stop affecting each other.
 
 THE HONEST CAVEAT
     Singletons are not evil. A logger or a config object is usually fine.

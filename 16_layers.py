@@ -2,66 +2,52 @@
 
     python 16_layers.py
 
-THE IDEA
-    16_domain.py          the rules. Knows about nothing else.
-    16_application.py     the use cases. Knows domain.
-    16_infrastructure.py  database, email, HTTP. Knows both.
+NOTHING TO IMPLEMENT TODAY
+    No TODOs. You read three files, then break one on purpose.
 
-    One rule - the DEPENDENCY RULE: arrows point inwards only.
-    domain may NEVER import infrastructure.
+THE SITUATION
+    Four files instead of one:
+
+        16_domain.py          the rules. Knows about nothing else.
+        16_application.py     the use cases. Knows domain.
+        16_infrastructure.py  database, email, HTTP. Knows both.
+        16_layers.py          this file: the checks, and the rule-enforcer.
+
+    ONE rule, the DEPENDENCY RULE: arrows point inwards only. domain may
+    NEVER import infrastructure.
 
 WHY THIS SESSION IS DIFFERENT
     Everybody draws this diagram. Almost nobody enforces it, so six months
-    later domain imports a database driver and the diagram is a lie.
-    Today you write a check that FAILS when someone breaks the rule. It parses
-    the import statements with ast, in about 20 lines.
+    later domain imports a database driver and the diagram on the wiki is
+    quietly fiction. Here the rule is a CHECK that fails and names the
+    offender, in about twenty lines of ast.
 
-READ IT TOGETHER (20 min - no TODOs today, and that is deliberate)
-    STEP 1  Open 16_domain.py and read the imports. There are none.
-            WHY AN EMPTY IMPORT LIST IS THE MOST IMPORTANT LINE IN THE
-            PROJECT: it is the only layer whose correctness does not depend
-            on anything else existing. You can reason about may_enrol_in()
-            without knowing whether there is a database, a web server, or a
-            company.
+YOUR TASK (25 min)
+    1. Open 16_domain.py and look at its imports. There are none. That is the
+       most important line in the project - it means you can reason about the
+       rules without knowing whether a database exists.
 
-    STEP 2  Open 16_application.py. EnrolStudent takes students, courses and
-            notifier as parameters and never constructs one.
-            WHY: it is session 07's fix, promoted to an architectural rule.
-            The use case declares what it needs; somebody further out
-            decides what those actually are.
+    2. Open 16_application.py. EnrolStudent is HANDED students, courses and a
+       notifier; it never constructs one. That is session 07's fix promoted to
+       an architectural rule.
 
-    STEP 3  Ask the room the question that makes it land: where is the
-            database? There isn't one. The checks below enrol a real student
-            in a real course with real rules and no storage at all.
-            WHY THAT IS POSSIBLE: the rules were never entangled with the
-            storage in the first place. That is the payoff, and it is worth
-            sitting with for a moment.
+    3. Run this file. Green. Now answer: where is the database? There isn't
+       one. The checks enrol a real student under real rules with no storage
+       at all, because the rules were never tangled up with the storage.
 
-    STEP 4  Read dependency_violations() together. It parses each layer's
-            imports with ast and compares them against ALLOWED.
-            WHY THIS EXISTS AT ALL: everybody draws this diagram. Almost
-            nobody enforces it, so in six months domain imports a database
-            driver, and the diagram on the wiki quietly becomes fiction.
-            Twenty lines turn the diagram into something that can FAIL.
+    4. Read dependency_violations(). Then BREAK the rule on purpose: add
+       `import importlib` and `importlib.import_module("16_infrastructure")`
+       to 16_domain.py. Run again and watch the check name the offender.
+       Then undo it.
 
-    STEP 5  Now break it on purpose - step 3 of YOUR JOB below. Watch the
-            check name the offender.
-            WHY BREAKING IT IS THE EXERCISE: a check you have never seen go
-            red is decoration. You do not know it works, you only know it is
-            green, and those are different facts.
+    Step 4 is the exercise. A check you have never seen go red is decoration -
+    you know it is green, which is not the same as knowing it works.
 
-YOUR JOB (25 min)
-    1. Read the three layer files. Understand why enrol works with no database.
-    2. Run this file. Green.
-    3. Now BREAK it deliberately: add `import importlib` +
-       `importlib.import_module("16_infrastructure")` to 16_domain.py.
-       Run again. Watch it name the offender. Then undo.
-
-THE DOWNSIDE
+THE COST
     Four files for a 200-line program is absurd, and you will meet codebases
     where the ceremony costs more than it saves. Adopt layers when more than
-    one person changes the code, or when there is more than one way in
-    (web + CLI + scheduled job).
+    one person changes the code, or when there is more than one way in -
+    web plus CLI plus a scheduled job.
 """
 import ast
 import importlib

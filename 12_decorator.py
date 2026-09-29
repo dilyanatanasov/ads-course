@@ -2,56 +2,48 @@
 
     python 12_decorator.py
 
-THE PAIN
-    SlowCatalog takes 5ms per lookup. The course page calls it 40 times.
-    Add caching WITHOUT editing SlowCatalog - three other teams use it.
+THE SITUATION
+    SlowCatalog takes 5ms per lookup and the course page calls it 40 times.
+    You need caching. You may NOT edit SlowCatalog - three other teams use it
+    and you do not own it.
 
-BUILD IT TOGETHER (15 min - we write this on the projector, you type along)
-    STEP 1  Write the check before the cache exists:
-                for _ in range(10):
-                    cached.title_of("c01")
-                check("cache stops repeat lookups", real.hits, 1)
-            WHY WE COUNT hits AND NOT TIME: "it got faster" is not a check.
-            It is a feeling, it is different on every laptop, and it will
-            fail randomly on the one student's machine running a virus scan.
-            Count the thing you actually care about - calls that reached the
-            slow object. Checks measure behaviour, never mood.
+THE IDEA
+    Write a class that WRAPS a Catalog, answers from memory when it can, and
+    passes the question on when it cannot. Because it implements Catalog
+    itself, anything that accepted the original accepts the wrapper - and
+    wrappers can be stacked.
 
-    STEP 2  CachingCatalog.title_of: in the cache? return it. Otherwise ask
-            inner, store, return.
-            WHY IT IMPLEMENTS Catalog TOO: a decorator is not just a wrapper,
-            it is a wrapper THAT PASSES FOR THE REAL THING. That is what lets
-            you stack them. Break that and the whole pattern collapses.
+FIRST RUN LOOKS BROKEN. IT IS NOT.
+    You get a traceback instead of PASS/FAIL, because the methods below raise
+    NotImplementedError until you write them. The last line of the traceback
+    names the method to start with.
 
-    STEP 3  LoggingCatalog the same way. Note neither class knows the other
-            exists, and neither knows SlowCatalog exists - they only know
-            "something with title_of".
+YOUR TASK (25 min)
+    1. CachingCatalog.title_of - in the cache? return it. Otherwise ask
+       inner, store the answer, return it.
+    2. LoggingCatalog.title_of - record the id, then ask inner.
+    3. Write the four remaining checks at the bottom.
 
-    STEP 4  Now stack them, and predict BEFORE running:
-                LoggingCatalog(CachingCatalog(real))     <- log outside
-                CachingCatalog(LoggingCatalog(real))     <- cache outside
-            Same two classes. Same two objects. Ask the room how many entries
-            the log has in each case, after two identical lookups.
-            WHY THIS IS THE ENTIRE SESSION: one logs 2, the other logs 1,
-            and neither is a bug. Log outside the cache answers "what did
-            callers ask for". Cache outside the log answers "what did we
-            actually go and fetch". You will want a different one of those
-            on a different day, and the ONLY thing that chooses is the order
-            you typed the constructors in. That is a design decision hiding
-            in punctuation.
+    Count real.hits, never elapsed time. "It got faster" is a feeling, it
+    differs on every laptop, and it will fail randomly on the machine running
+    a virus scan. Count the calls that actually reached the slow object.
 
-YOUR JOB (25 min)
-    1. CachingCatalog wraps any Catalog and remembers answers.
-    2. LoggingCatalog wraps any Catalog and records calls.
-    3. Stack them. Then SWAP THE ORDER and explain what changed.
-       That is the whole lesson: wrapping order is a design decision with
-       visible consequences.
-    STRETCH: TimingCatalog in five lines.
+THE ORDER IS THE LESSON
+    These two are the same classes and the same objects:
 
-THE DOWNSIDE
+        LoggingCatalog(CachingCatalog(real))     log outside
+        CachingCatalog(LoggingCatalog(real))     cache outside
+
+    After two identical lookups, one logs twice and the other logs once.
+    Neither is a bug. Log outside the cache answers "what did callers ask
+    for". Cache outside the log answers "what did we actually go and fetch".
+    You will want a different one on a different day, and the only thing that
+    decides is the order you typed the constructors in.
+
+THE COST
     Four layers deep, a bug appears. Which layer? The call stack is
-    log -> cache -> timing -> real, and each looks innocent. Also your cache
-    starts lying the moment a course title changes and nothing invalidates it.
+    log -> cache -> real and each looks innocent. And your cache starts lying
+    the moment a course title changes, because nothing invalidates it.
 """
 import time
 from abc import ABC, abstractmethod
@@ -105,26 +97,21 @@ if __name__ == "__main__":
         cached.title_of("c01")
     check("cache stops repeat lookups", real.hits, 1)
 
-    # ---- NOW YOU WRITE THE REST ------------------------------------------
-    #   "logging records calls"
-    #       wrap a SlowCatalog in a LoggingCatalog, look up c01 then c02,
-    #       and check log.calls.
+    # YOUR TURN - write one check for each, then make them pass:
+    #   logging records calls   wrap a SlowCatalog in a LoggingCatalog, look
+    #                           up c01 then c02, check log.calls
     #
-    # Then the two stacks. WRITE THE PREDICTION DOWN BEFORE YOU RUN EITHER.
+    # Then the two stacks. WRITE YOUR PREDICTION DOWN BEFORE RUNNING EITHER.
     # Both do exactly two identical lookups of "c01":
     #
-    #   LoggingCatalog(CachingCatalog(real))    <- log on the OUTSIDE
-    #       "log outside cache: cache works"        real.hits is ?
-    #       "log outside cache: log sees both"      len(stack.calls) is ?
+    #   LoggingCatalog(CachingCatalog(real))    log on the OUTSIDE
+    #       log outside cache: cache works      real.hits is ?
+    #       log outside cache: log sees both    len(stack.calls) is ?
     #
-    #   CachingCatalog(LoggingCatalog(real))    <- cache on the OUTSIDE
-    #       "cache outside log: log only sees misses"
-    #                                               len(inner_log.calls) is ?
+    #   CachingCatalog(LoggingCatalog(real))    cache on the OUTSIDE
+    #       cache outside log: log only sees misses
+    #                                           len(inner_log.calls) is ?
     #
-    # The two log counts are different. If your prediction was wrong, do not
-    # fix the prediction - work out WHY, out loud, before you touch the code.
-    # Neither arrangement is the bug. Being unable to say which one you built
-    # is the bug.
-    #
-    # STRETCH: TimingCatalog in five lines. Then ask where it has to sit in
-    #          the stack to measure what you actually meant to measure.
+    # The two log counts differ. If your prediction was wrong, work out WHY
+    # out loud before touching the code. Neither arrangement is the bug -
+    # not knowing which one you built is.

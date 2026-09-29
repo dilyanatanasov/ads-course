@@ -2,61 +2,42 @@
 
     python 09_command.py
 
-THE IDEA IN ONE LINE
-    Stop calling the action. Build an object that REPRESENTS the action, then
+THE SITUATION
+    The dean asks what the office did last night, and which of it can be
+    undone. Nobody can answer, because the office called functions, and
+    functions leave no trace.
+
+THE IDEA
+    Stop calling the action. Build an OBJECT that represents the action, then
     decide later when - or whether - to run it.
 
-    Once an action is an object you get undo, retry, queueing and audit almost
-    for free. This is the pattern behind every task queue you will ever use.
+    Once an action is an object you get undo, retry, queueing and an audit
+    trail almost for free. This is the pattern behind every task queue you
+    will ever use, and session 23 puts one on disk.
 
-BUILD IT TOGETHER (15 min - we write this on the projector, you type along)
-    STEP 1  Write the undo check first:
-                bus.run(RegisterCommand(store, "s001", "c01"))
-                bus.undo_last()
-                check("undo", ("s001", "c01") in store.rows, False)
-            WHY UNDO FIRST: undo is the requirement that makes an object
-            necessary. A function can register a student. Only an object can
-            remember ENOUGH to take it back. Write this check first and the
-            design is forced; write it last and you will wonder all session
-            why we did not just call a function.
+FIRST RUN LOOKS BROKEN. IT IS NOT.
+    You get a traceback instead of PASS/FAIL, because the methods below raise
+    NotImplementedError until you write them. The last line of the traceback
+    names the method to start with.
 
-    STEP 2  RegisterCommand.execute() adds, undo() removes.
-            WHY THE COMMAND HOLDS store AND the arguments: it has to be
-            runnable LATER, by someone who was not there when it was
-            created. That is what turns it into something you can queue,
-            retry, log or ship across a network - and it is exactly what
-            session 23 does with it.
+YOUR TASK (25 min)
+    1. RegisterCommand and CancelCommand, each with execute() and undo().
+    2. CommandBus.run(command) - execute it, record it in history.
+    3. CommandBus.undo_last().
+    4. run(command, attempts=3) - retry on exception.
+    5. Write the two remaining checks at the bottom.
 
-    STEP 3  CommandBus.run() calls execute() and appends to history.
-            WHY THE BUS OWNS HISTORY AND NOT THE COMMAND: one command knows
-            about itself. Only the bus sees the ORDER. "What did we do last
-            night" is a question about order.
+    Undo is the requirement that makes an object necessary. A function can
+    register a student; only an object can remember enough to take it back.
 
-    STEP 4  Add attempts. Wrap execute() in a loop with try/except.
-            WHY RETRY LIVES HERE AND NOT IN THE COMMAND: put it in
-            RegisterCommand and you write it again in CancelCommand, and in
-            every command anyone adds for the next three years. The bus is
-            the one place that sees every command, so it is the one place a
-            cross-cutting rule belongs. Hold that thought until session 13.
+    Retry belongs on the BUS, not in the commands. The bus is the one place
+    that sees every command, so it is where a rule affecting all of them
+    goes. Hold that thought until session 13.
 
-    STEP 5  Ask the room: `bus.run(Flaky(), attempts=3)` retries three times.
-            What if execute() already charged a card before it failed?
-            Nobody has to solve it today - but everyone should feel it.
-            Session 23 is where it comes back with a name.
-
-YOUR JOB (25 min)
-    1. RegisterCommand and CancelCommand with execute() and undo().
-    2. CommandBus with run(), undo_last() and a history list.
-    3. run(command, attempts=3) retries on exception.
-    STRETCH: redo().
-
-THE TWIST
-    The dean asks "what did we do last night?" With commands that is
-    bus.history. Without them it does not exist.
-
-THE DOWNSIDE
-    Every action now needs a class. A one-line operation became fifteen lines.
-    Use this when you need undo/retry/audit. Not because it looks professional.
+THE COST
+    Every action now needs a class. A one-line operation became fifteen
+    lines. Use this when you need undo, retry or audit - not because it looks
+    professional.
 """
 from check import check
 
@@ -112,22 +93,15 @@ if __name__ == "__main__":
     bus.undo_last()
     check("undo", ("s001", "c01") in store.rows, False)
 
-    # ---- NOW YOU WRITE THE REST ------------------------------------------
-    #   "history is an audit trail"
-    #       run a RegisterCommand and then a CancelCommand, and check
-    #       len(bus.history). Decide first: does undo_last() REMOVE the entry
-    #       from history, or is undoing itself part of the history? Both are
-    #       defensible. Your check has to say which one you chose.
+    # YOUR TURN - write one check for each, then make them pass:
+    #   history is an audit trail
+    #       run a RegisterCommand then a CancelCommand, check
+    #       len(bus.history). Decide first: does undo_last() remove the
+    #       entry, or is undoing itself part of the history? Either is
+    #       defensible - your check says which you chose.
     #
-    #   "retried until it worked"
-    #       define a Flaky command down here that raises the first two times
-    #       and succeeds on the third. Count the calls in a dict - `calls =
-    #       {"n": 0}` - not a plain int, or the closure will fight you.
-    #       Run it with attempts=3 and check the count.
-    #       WHY A FAKE AND NOT A REAL FAILURE: you cannot make a real network
-    #       fail twice and then work, on demand, in a classroom. A fake that
-    #       fails on schedule is the only way to check retry logic at all -
-    #       and it only works because run() takes any object with execute().
-    #       That is session 02's seam, paying off.
-    #
-    # STRETCH: redo(). Write the check first and the API will design itself.
+    #   retried until it worked
+    #       define a Flaky command down here that raises the first two
+    #       times and succeeds on the third. Count the calls in a dict -
+    #       calls = {"n": 0} - not a plain int, or the closure fights you.
+    #       Run it with attempts=3.

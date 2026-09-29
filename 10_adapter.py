@@ -3,60 +3,42 @@
     python 10_adapter.py
 
 THE SITUATION
-    The university's payment provider has an API written in 2007. It speaks XML
-    strings, returns status codes as strings, and uses stotinki where you use
-    leva. You may NOT change it - you do not own it.
+    The university's payment provider has an API written in 2007. It takes XML
+    in a string, returns status codes in a string, and counts money in
+    stotinki where you count leva. You do not own it and you may not change
+    one character of it.
 
-BUILD IT TOGETHER (15 min - we write this on the projector, you type along)
-    STEP 1  Read LegacyBankGateway first, and read it as a VICTIM, not a
-            critic. XML in a string, status codes in a string, money in
-            stotinki. You may not change any of it.
-            WHY THIS FRAMING MATTERS: half of all professional work is this.
-            The skill is not writing clean code on an empty page, it is
-            keeping a mess contained when you do not own the mess.
+    Read LegacyBankGateway as a victim, not a critic. Half of all professional
+    work is this: keeping a mess contained when the mess is not yours.
 
-    STEP 2  Write the check before the adapter:
-                ref = payments.charge("BG80BNBG", 120.50)
-                check("returns a reference", ref.startswith("TX"), True)
-            WHY WRITE THE NICE CALL FIRST: you have just specified the
-            interface you WISH the bank had. Everything after this is
-            translation. Design the inside-facing side first - the outside
-            is not yours to design.
+THE IDEA
+    One class speaks 2007 on one side and offers charge(account, leva) on the
+    other. All the ugliness lives in that class, and the rest of the system
+    never learns the bank exists.
 
-    STEP 3  Now the conversion, and go slowly here: 120.50 leva is 12050
-            stotinki. `int(leva * 100)` is WRONG and will bite someone -
-            floats make 120.50 * 100 come out as 12049.999999999998.
-            Use round(). Say this out loud; it is a real production bug and
-            it costs real money.
+FIRST RUN LOOKS BROKEN. IT IS NOT.
+    You get a traceback instead of PASS/FAIL, because the methods below raise
+    NotImplementedError until you write them. The last line of the traceback
+    names the method to start with.
 
-    STEP 4  Parse the response and raise PaymentFailed on ERR - but keep the
-            code: PaymentFailed(message, code="E_INSUF_0042").
-            WHY THE CODE SURVIVES: this is the rule the docstring's DOWNSIDE
-            names. An adapter that translates the interface AND throws away
-            the diagnostics has not helped you, it has blindfolded you at
-            3am. Translate the shape; preserve the evidence.
+YOUR TASK (25 min)
+    1. BankAdapter.charge(account, leva)
+         - leva to stotinki. 120.50 leva is 12050 stotinki, and
+           int(leva * 100) is WRONG - floats make that 12049.999999999998.
+           Use round(). This is a real bug that costs real money.
+         - build the XML, call do_payment, read the response.
+         - on error raise PaymentFailed, KEEPING the bank's own code.
+    2. FakePaymentGateway - same interface, no bank. Four lines.
+    3. Write the four remaining checks at the bottom.
 
-    STEP 5  FakePaymentGateway - same interface, no bank, four lines.
-            WHY IT IS ALLOWED TO BE THIS CHEAP: because PaymentPort defined
-            what "a payment gateway" means. Once the interface is a real
-            thing, a second implementation is almost free. That is the same
-            move as session 04, applied to the outside world instead of a
-            business rule.
+    The error code must survive. An adapter that translates the interface and
+    throws away the diagnostics has not helped you - it has blindfolded you at
+    3am. Translate the shape, preserve the evidence.
 
-YOUR JOB (25 min)
-    Write BankAdapter so the rest of the system only ever sees charge(account,
-    leva). All the 2007 lives in one class.
-    Then write FakePaymentGateway - same interface, no bank - for testing.
-
-THE TWIST
-    The university switches provider next year. Your domain code does not
-    change by one character.
-
-THE DOWNSIDE
-    Adapters hide things. When the bank starts failing, your clean interface
-    says PaymentFailed and the useful detail - error code E_INSUF_0042 - was
-    thrown away by your own adapter.
-    RULE: translate the interface, preserve the diagnostics.
+THE COST
+    Adapters hide things, including the parts you needed to see. Your clean
+    interface says PaymentFailed; the useful detail was discarded by your own
+    code unless you deliberately kept it.
 """
 import re
 from abc import ABC, abstractmethod
@@ -123,26 +105,14 @@ if __name__ == "__main__":
     ref = payments.charge("BG80BNBG", 120.50)
     check("returns a reference", ref.startswith("TX"), True)
 
-    # ---- NOW YOU WRITE THE REST ------------------------------------------
-    #   "converted to stotinki"
-    #       bank.ledger[0][1] after charging 120.50 leva. Work out the
-    #       expected integer yourself, then try int(120.50 * 100) in a REPL
-    #       before you trust it.
-    #
-    #   "failure raises" and "keeps the bank's error code"
-    #       charging 5000.00 leva is over the bank's limit. Wrap it in
-    #       try/except PaymentFailed and check BOTH that it raised and that
-    #       exc.code is still the bank's own "E_INSUF_0042".
-    #       WHY TWO CHECKS AND NOT ONE: "it failed" and "we can still tell
-    #       WHY it failed" are two different promises, and the second one is
-    #       the one adapters usually break.
-    #
-    #   "fake gateway" / "fake recorded it"
-    #       FakePaymentGateway().charge("acct", 10.0) returns "FAKE-1" and
-    #       records ("acct", 10.0). Decide the reference format yourselves -
-    #       just make it obviously fake, so a fake reference can never be
-    #       mistaken for a real one in a log.
-    #
-    # STRETCH: the bank returns E_MALFORMED_0001 for junk input. Write a
-    #          check for what YOUR adapter does with it. Can it even happen,
-    #          given your adapter builds the XML? Argue about it.
+    # YOUR TURN - write one check for each, then make them pass:
+    #   converted to stotinki   bank.ledger[0][1] after 120.50 leva. Work
+    #                           the number out yourself, then try
+    #                           int(120.50 * 100) before you trust it.
+    #   failure raises          5000.00 leva is over the bank's limit
+    #   keeps the error code    ...and exc.code is still "E_INSUF_0042".
+    #                           Two checks, because "it failed" and "we can
+    #                           still tell why" are different promises, and
+    #                           adapters usually break the second one.
+    #   fake gateway            FakePaymentGateway().charge("acct", 10.0)
+    #   fake recorded it        ...and .charged holds ("acct", 10.0)

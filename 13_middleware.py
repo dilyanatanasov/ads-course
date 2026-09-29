@@ -2,63 +2,40 @@
 
     python 13_middleware.py
 
-WHY THIS ONE MATTERS
-    This is not academic. This IS Express, Django and ASP.NET Core. After today
-    you will recognise the shape in their documentation.
+THE SITUATION
+    Every request to the course list needs three things that have nothing to
+    do with course lists: check the token, refuse callers who ask too often,
+    and log what happened. Putting all three inside the handler means writing
+    them again in the next handler, and the one after that.
 
-BUILD IT TOGETHER (15 min - we write this on the projector, you type along)
-    STEP 1  Check the bare application first, with no middleware at all:
-                check("plain app", application(request())["status"], 200)
-            WHY BOTHER CHECKING THE OBVIOUS: in ten minutes something will
-            return 401 and you will need to know whether the app underneath
-            still works. This line is the one that answers that instantly.
-            The cheapest debugging tool is a check on the thing you were
-            sure about.
+THE IDEA
+    A chain. Each link may inspect the request, refuse it, pass it on, and
+    inspect the response on the way back. The handler at the end never learns
+    it was in a chain.
 
-    STEP 2  AuthMiddleware alone. No token -> 401 and DO NOT call self.next.
-            WHY THE EARLY RETURN IS THE INTERESTING LINE: a middleware that
-            can refuse to pass the request on is a middleware that can
-            protect everything behind it. If it always called next, it would
-            be a logger, not a guard.
+    This is not academic. This IS Express, Django and ASP.NET Core - after
+    today you will recognise the shape in their documentation.
 
-    STEP 3  Now read call() at the top, and notice it accepts either an
-            object with .handle or a plain function.
-            WHY THAT SMALL UGLINESS EXISTS: it lets the chain end in the
-            plain application function without the application knowing it is
-            in a chain. The last thing in a pipeline should never need to
-            know it is last.
+YOUR TASK (25 min)
+    1. AuthMiddleware      - no token -> 401, and do NOT call self.next.
+    2. RateLimitMiddleware - over the limit -> 429.
+    3. LoggingMiddleware   - record (path, status) AFTER the call. Before it
+                             you know the path; only after do you know the
+                             status.
+    4. build(app, limit)   - assemble the chain. The ORDER MATTERS, and
+                             deciding it is the real task. Auth before rate
+                             limiting, or after? One of those two lets an
+                             anonymous flood use up a paying student's budget.
+                             Vote on it, then write the last check and find out.
+    5. Write the seven remaining checks at the bottom.
 
-    STEP 4  LoggingMiddleware. Record AFTER the call, not before.
-            WHY AFTER: before the call you know the path. Only after it do
-            you know the status. A middleware sees the request on the way in
-            AND the response on the way out - that two-sided shape is the
-            whole reason this is a chain and not a list of validators.
+    Build one middleware at a time and check it alone. A broken chain has
+    three suspects.
 
-    STEP 5  build(). Now argue about order before writing it: auth first, or
-            rate limit first? Take a vote, then write the check that settles
-            it - flood the chain with UNAUTHENTICATED requests, then send a
-            good one and see whether it still gets through.
-            WHY THIS IS NOT A STYLE QUESTION: one order lets anyone on the
-            internet exhaust a real user's budget without ever logging in.
-            The other does not. Same components, same code, one is a
-            vulnerability. Order is not cosmetic.
-
-YOUR JOB (25 min)
-    Each middleware may inspect the request, reject it, pass it on, and inspect
-    the response on the way back.
-    1. LoggingMiddleware  - records path and final status
-    2. AuthMiddleware     - no token -> 401
-    3. RateLimitMiddleware- over the limit -> 429
-    4. build()            - assemble the chain
-
-    STRETCH: which order? Auth before rate limiting, or after? One of those
-    lets an unauthenticated flood eat a real user's budget. The last check
-    tests for it.
-
-THE DOWNSIDE
-    A request now passes through five functions before anything useful happens.
-    When one mysteriously returns 401, the cause is in a file you did not open,
-    registered in a list you did not write.
+THE COST
+    A request now passes through four functions before anything useful
+    happens. When one mysteriously returns 401, the cause is in a file you
+    did not open, registered in a list you did not write.
 """
 from check import check
 
@@ -118,36 +95,25 @@ if __name__ == "__main__":
     # ---- STEP 1: the boring check that earns its place in ten minutes ----
     check("plain app", application(request())["status"], 200)
 
-    # ---- NOW YOU WRITE THE REST ------------------------------------------
-    # One middleware at a time. Do not write build() until the three pieces
-    # pass on their own - a broken chain has three suspects.
+    # YOUR TURN - write one check for each, then make them pass. One
+    # middleware at a time; do not write build() until the three pass alone.
     #
-    #   "auth rejects no token"   AuthMiddleware(application) with
-    #                             request(token=None) -> status 401
-    #   "auth allows a token"     ...with a token -> 200
+    #   auth rejects no token   AuthMiddleware(application) with
+    #                           request(token=None) -> 401
+    #   auth allows a token     ...with a token -> 200
+    #   rate limit              RateLimitMiddleware(application, limit=3),
+    #                           four requests. Check the WHOLE list of
+    #                           statuses, not just the last - checking only
+    #                           the last would pass for a middleware that
+    #                           blocks everything.
+    #   log sees the response   LoggingMiddleware, one request, then check
+    #                           log.entries holds the path AND the status
+    #   full chain allows       build(application), good request -> 200
+    #   full chain rejects      ...token-less -> 401
     #
-    #   "rate limit"              RateLimitMiddleware(application, limit=3),
-    #                             four requests in a row. Check the WHOLE
-    #                             list of statuses, not just the last one.
-    #                             WHY THE LIST: [200, 200, 200, 429] proves
-    #                             it blocks the fourth AND allows the first
-    #                             three. Checking only the last would pass
-    #                             for a middleware that blocks everything.
-    #
-    #   "log sees the response too"
-    #                             LoggingMiddleware(application), one
-    #                             request, then check log.entries holds the
-    #                             path AND the status: [("/courses", 200)].
-    #
-    #   "full chain allows" / "full chain rejects"
-    #                             build(application), then a good request
-    #                             and a token-less one.
-    #
-    # ---- AND THE ONE THAT DECIDES THE ORDER ------------------------------
-    #   "unauth flood did not eat the budget"
-    #       build(application, limit=2). Send FIVE requests with no token.
-    #       Then send one good request and check it still gets 200.
-    #       Write this check BEFORE you decide the order in build(). Get the
-    #       order wrong and an anonymous flood locks out a paying student -
-    #       and you will see it here, in a classroom, rather than in an
-    #       incident report.
+    # AND THE ONE THAT DECIDES THE ORDER:
+    #   unauth flood did not eat the budget
+    #       build(application, limit=2). Send FIVE token-less requests, then
+    #       one good one, and check it still gets 200. Get the order wrong
+    #       and an anonymous flood locks out a paying student - here, in a
+    #       classroom, rather than in an incident report.
