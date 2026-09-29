@@ -144,7 +144,14 @@ tracks it normally.
 Keep `solutions/` backed up somewhere yourself. Because it is gitignored, this
 repo is not backing it up for you.
 
-### Verify everything still runs
+### Before you teach, and before you push
 
-    cd solutions && for f in *_solution.py; do python "$f"; done
-    python build_reveal.py --check
+    python verify.py              everything (~20s)
+    python verify.py --fast       skip session 24's three processes
+
+Checks that every solution runs green, that the no-TODO sessions (01, 16, 24)
+are green as students receive them, that every task file parses, that `reveal/`
+is not stale, and that `solutions/` has not leaked into git.
+
+Session 24 was broken for weeks because the only thing that would have caught
+it was somebody running that one file. This is that somebody. Run it.
