@@ -136,7 +136,11 @@ class Gradebook:
         raise NotImplementedError
 
     def grade(self, student_id, score):
-        raise NotImplementedError    # TODO
+        # TODO: two lines. Get the strategy from strategy_for(student_id),
+        # then ask THAT object to grade the score. Note this method uses
+        # student_id for nothing except choosing the rule - once you have
+        # the rule, it only needs a number.
+        raise NotImplementedError
 
 
 if __name__ == "__main__":
@@ -160,3 +164,16 @@ if __name__ == "__main__":
     #                                   exact number. A hash is not a shuffle.
     #
     # The 200 students are f"s{i:03d}" for i in range(200).
+
+    # ---- GIVEN, and it is the whole point of the session -------------------
+    # These three numbers are not from your machine. They are from mine, and
+    # from the server, and from the laptop of whoever runs this in 2031.
+    # A rollout is only meaningful if every process agrees who is in it -
+    # otherwise the same student sees the feature appear and disappear
+    # depending on which server answered.
+    #
+    # This check CANNOT pass with hash(). Try it: run it twice and watch the
+    # numbers change. Then look up hashlib.
+    check("same buckets on every machine, in every process",
+          [bucket_of(s, NEW_GRADING) for s in ("s001", "s002", "s003")],
+          [17, 98, 19])
