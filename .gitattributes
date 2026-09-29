@@ -1,0 +1,5 @@
+# Students clone this onto Windows, macOS and Linux. Normalise line endings in
+# the repo so nobody opens a session file full of ^M and thinks it is broken.
+* text=auto eol=lf
+*.py text eol=lf
+*.md text eol=lf
