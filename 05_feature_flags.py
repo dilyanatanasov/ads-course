@@ -3,7 +3,7 @@
     python 05_feature_flags.py         the checks
     python 05_feature_flags.py demo    every flag state, side by side
 
-THE PAIN
+THE SITUATION
     Session 04 gave you interchangeable grading rules. But you still chose one
     IN CODE - `Gradebook(BulgarianScale())` - which means changing your mind
     means editing a file, committing it, and deploying.
@@ -14,7 +14,7 @@ THE PAIN
 
     A rule you can swap but not swap AT RUNTIME is only half a strategy.
 
-WHAT A FEATURE FLAG ACTUALLY IS
+THE IDEA
     A strategy chosen from configuration instead of from code. That is the
     whole idea. Every "feature flag platform" you will ever be sold is this,
     plus a web page to edit the config and a bill.
@@ -49,7 +49,7 @@ THE TWIST
     deploy, no restart, no commit. Compare that with session 01, where
     "change the grading rule" meant editing an if/elif chain.
 
-THE DOWNSIDE - and this one is not really about code
+THE COST - and this one is not really about code
     Every flag DOUBLES your number of code paths. Two flags is four
     combinations and you are testing one of them. Flags are debt with an
     expiry date: a flag still in the codebase a year after the rollout
