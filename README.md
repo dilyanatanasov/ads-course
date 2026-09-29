@@ -93,6 +93,7 @@ and looks different, that is often fine - and worth asking about.
     02  seams                 hardcoded clock, print and fee rule -> parameters
     03  coupling              blast radius, measured with ast
     04  strategy              grading rules per faculty
+    05  feature flags         strategy II - the rule chosen at runtime
     06  factory               who chooses the strategy
     07  singleton             build it, then watch state leak between scenarios
     08  observer              registration side effects
