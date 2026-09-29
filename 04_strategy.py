@@ -2,63 +2,43 @@
 
     python 04_strategy.py
 
-THE PAIN
-    Every new faculty means editing the same if/elif chain. You felt it in 01.
+THE SITUATION
+    Every faculty grades differently, and a new faculty arrives every few
+    years. In session 01 that meant another branch in one if/elif chain that
+    every faculty shares - so adding Maritime risked breaking Law.
+
+THE IDEA
+    Make the grading rule an OBJECT you hand to the Gradebook, instead of a
+    branch inside it. Adding a faculty then means adding a class, not editing
+    one everybody depends on.
 
 FIRST RUN LOOKS BROKEN. IT IS NOT.
-    You get a traceback, not PASS/FAIL lines, because the methods below raise
-    NotImplementedError until you write them. Read the LAST line of the
-    traceback - it names the method to write first. As soon as one method
-    works you start getting normal PASS/FAIL output again.
+    You get a traceback instead of PASS/FAIL, because the methods below raise
+    NotImplementedError until you write them. The last line of the traceback
+    names the method to start with.
 
-BUILD IT TOGETHER (15 min - we write this on the projector, you type along)
-    STEP 1  Write the first check, before any class exists:
-                check("bulgarian top", Gradebook(BulgarianScale()).grade(91),
-                      "6 (Excellent)")
-            It does not even import. Good.
-            WHY START WITH A LINE THAT CANNOT RUN: that line is a design
-            decision in disguise. It says a Gradebook is HANDED a rule rather
-            than choosing one, and it says every rule answers to .grade().
-            We just designed the interface by writing the call we wished we
-            could make. Notice nobody argued about class diagrams.
+YOUR TASK (25 min)
+    1. Gradebook.grade - return what the strategy says. Two lines, do this
+       first, it is the easiest.
+    2. Percentage.grade  -> "73%"
+    3. PassFail.grade    -> "PASS" or "FAIL"
+    4. BulgarianScale.grade - below pass_mark is "2 (Poor)". The four passing
+       grades split what is left evenly: 3, 4, 5, 6.
+    5. Write the four remaining checks listed at the bottom.
 
-    STEP 2  GradingStrategy - an ABC with one abstract method.
-            WHY ABC AND NOT A PLAIN CLASS: with @abstractmethod, forgetting
-            to implement grade() fails LOUDLY at construction. Without it,
-            you get None back three layers away and spend an afternoon on it.
-            Push errors towards the mistake.
+    Notice BulgarianScale.grade is still an if/elif chain - the same one from
+    session 01. You did not delete the complexity. You put a wall around it
+    so it stops growing every time a faculty joins.
 
-    STEP 3  BulgarianScale with the pass mark HARDCODED to 50. Run it. Green.
-            WHY HARDCODE SOMETHING WE KNOW IS WRONG: because the check for
-            the adjustable pass mark is not written yet. Write only what the
-            current check demands, or you are guessing at requirements - and
-            in a minute the twist will tell us what the real requirement is.
+THE TWIST
+    Maritime wants the same 2-6 scale but a pass mark of 45 instead of 50.
+    How many existing lines do you edit? Compare with session 01.
 
-    STEP 4  Now the twist arrives: Maritime wants pass mark 45. Add the check
-            FIRST, watch it fail, then make pass_mark a constructor argument.
-            WHY THE FAILURE MATTERS: a check you never saw fail is a check
-            you have no reason to trust. It might be passing by accident.
-
-    STEP 5  Ask the room: where did the if/elif chain from session 01 go?
-            It did not. It is still there, inside BulgarianScale. We did not
-            delete the complexity - we put a wall around it so it stops
-            leaking into every faculty we add.
-
-YOUR JOB (25 min)
-    1. Finish BulgarianScale (support an adjustable pass_mark).
-    2. Add PassFail (>= 60 passes) and Percentage.
-    3. Make Gradebook take a strategy instead of a faculty string.
-    STRETCH: Weighted - a strategy that combines scores then delegates to
-             ANOTHER strategy. A strategy holding a strategy. That is allowed.
-
-THE TWIST (5 min)
-    Maritime wants the 2-6 scale with pass mark 45 instead of 50. How many
-    existing lines do you edit? Compare with session 01.
-
-THE DOWNSIDE - say this out loud
-    You now have five small classes instead of one function. Which strategy
-    actually runs for student s001? You cannot tell by reading. You have to
-    run it. Session 06 is about who pays that bill.
+THE COST
+    You now have four small classes instead of one function. Which grading
+    rule runs for student s001? You cannot tell by reading - you have to run
+    it. You traded "easy to find" for "easy to change". Session 06 is about
+    who pays that bill.
 """
 from abc import ABC, abstractmethod
 from check import check

@@ -3,39 +3,31 @@
     python 01_baseline.py
 
 THE SITUATION
-    You inherit a working exam registration system. One file. It runs.
+    You have inherited a working exam registration system. One file, and it
+    runs - every check passes before you touch anything. Run it first and see.
 
-RUN IT TOGETHER (8 min - no new code today)
-    STEP 1  Run it. Everything passes. Say that out loud: this code WORKS.
-            WHY THAT IS THE STARTING POINT: nothing you will do this semester
-            is about making broken code work. It is about what happens to
-            working code when someone asks for one more thing. If you only
-            ever judge code by "does it run", every design in this course
-            looks like a waste of time.
+YOUR TASK (25 min, in pairs)
+    Three change requests from the university. Do them any way you like -
+    there is no correct answer today. Time yourself on each one.
 
-    STEP 2  Read the checks at the bottom before the class. They are the only
-            description of what this system promises.
-            WHY THEY GO FIRST FROM NOW ON: from session 02, YOU write these
-            before you write the code. Today you just read them, so that
-            next week you know what you are aiming at.
-
-    STEP 3  Now take the change requests. Time yourself on each one.
-
-YOUR JOB (25 min, pairs)
-    Three change requests. Do them any way you like - no correct answer today.
-
-    CR-1  Faculty of Maritime Studies joins. They grade 0-100 percentage.
-    CR-2  Notifications go to email as well as console (append to sent_emails).
-    CR-3  Students with a scholarship do not pay.
+      CR-1  Maritime Studies joins. They grade 0-100 percentage.
+      CR-2  Notifications go to email as well as console, appended to
+            sent_emails.
+      CR-3  Students with a scholarship do not pay.
 
 THEN ANSWER OUT LOUD
-    1. How many places did you touch for CR-1?
-    2. What changes when a fourth faculty joins?
-    3. Which CR was hardest, and why?
+    1. How many separate places did you touch for CR-1?
+    2. What happens when a FOURTH faculty joins?
+    3. Which request was hardest, and why?
 
-THE POINT
-    Nobody wrote this badly on purpose. This is what code looks like when every
-    feature was added the fastest way at the time.
+WHY THIS MATTERS
+    Nobody wrote this badly on purpose. Every line was the fastest correct
+    thing to do at the time. This is what code becomes when that happens
+    fifty times, and you will inherit something like it within a year.
+
+    From next session you write the checks before the code, and we write the
+    first ones together. Read the checks at the bottom now, so you know what
+    they look like.
 """
 from check import check, check_raises
 

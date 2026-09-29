@@ -2,68 +2,41 @@
 
     python 03_coupling.py
 
-Most courses define these two words and move on. Today you get a number.
+NOTHING TO IMPLEMENT TODAY
+    No TODOs. Run it, read the three measurements, and argue about them.
 
-    COUPLING  how much one thing depends on another
-    COHESION  how much the things inside one class belong together
-
-BLAST RADIUS
-    Pick a change. Count the methods you must edit to make it. That number is
-    your coupling, and unlike the definition you can argue about it with
-    evidence. blast_radius() below counts for you, using ast.
-
-THE TWO WORDS, AND WHAT EACH ONE BUYS YOU
+THE TWO WORDS
     COUPLING   how much one thing depends on another.
-               LOW coupling buys you: when you change X, you do not have to
+               LOW coupling buys you: when you change X you do not have to
                open Y. The change stays where you put it.
 
     COHESION   how much the things inside one class belong together.
                HIGH cohesion buys you: you can read one method and know what
                it is for, because it only does one job.
 
-    They are not the same knob. A class can be badly coupled AND badly
-    cohesive - Flat below is both - or low-coupled and still incoherent.
+    They are different knobs. Flat below is bad at both.
 
-NOTHING TO IMPLEMENT TODAY
-    There are no TODOs. Run the file, read the three measurements, and argue.
-    Below are two designs doing the same job: Flat is written the way session
-    01 was; Split separates pricing from enrolling.
+THE SITUATION
+    Two versions of the same program. Flat is written the way session 01 was.
+    Split separates pricing from enrolling. Both work, and both pass the same
+    checks.
 
-    1. Before you run it, PREDICT. To change the pricing rule - how many
-       methods in Flat? How many in Split? Say a number out loud first.
-       A prediction you got wrong is worth ten you never made.
+YOUR TASK (20 min, out loud)
+    1. PREDICT FIRST, before you run anything. To change the pricing rule,
+       how many methods must you open in Flat? How many in Split? Say a
+       number. A prediction you got wrong is worth ten you never made.
 
-    2. Run it. The first measurement says 1 and 1 - the same. So look at the
-       two methods themselves. Flat.register changes pricing while also
-       storing a row and sending a message; Pricing.fee_for is one line about
-       money. THAT is the difference, and the count did not show it.
+    2. Run it. Measurement 1 says 1 and 1 - the SAME. So open the two methods
+       and look. Flat.register changes pricing while also storing a row and
+       sending a message. Pricing.fee_for is one line about money.
+       The count was equal. The risk was not.
 
-    3. Measurement 3 is the one that matters most: 5 against 5. Do not let
-       anyone skip it.
+    3. Measurement 3 is the one that matters. Do not skip it.
 
-THE RESULT YOU SHOULD EXPECT
-    To change the PRICING RULE, Flat makes you open a method that also stores
-    rows and sends messages. Split makes you open a method that does one thing.
-    Same edit, very different chance of breaking something unrelated.
-
-THE HONEST BIT - do not skip this
-    Look at measurement 3. Renaming the `grade` field costs about the same in
-    both designs. Decoupling did nothing for it.
-
-    That is not a flaw in the exercise, it is the lesson: you decouple along
-    the axis you expect to change. Split anticipated pricing changing and was
-    rewarded. It never anticipated the row shape changing and got no help.
-    Nobody decouples along every axis at once - that is just a program with no
-    structure at all.
-
-THE DOWNSIDE
-    Split is longer, and to follow one registration you open three classes.
-    Reading it is harder; changing pricing is easier. You are choosing which of
-    those you do more often.
-
-    Corollary worth saying out loud: for code that will NEVER change, Flat is
-    the correct design. Most coursework is in that category, which is why all
-    of this felt pointless until now.
+WHY THIS SESSION EXISTS
+    Not to teach a technique - there is nothing to build. It is to give you a
+    NUMBER instead of an adjective. "This feels messy" is an argument nobody
+    can win. "Renaming that field touches five methods" is one you can.
 """
 import ast
 import inspect
@@ -178,7 +151,6 @@ if __name__ == "__main__":
 
     print("\nThese three measurements RENAME NOTHING and EDIT NOTHING.")
     print("They only count how many methods a change would force you to open.")
-    print("The one real edit you make today is the price, at the bottom.")
     print("\n1. IF YOU CHANGED THE PRICING RULE - which method would you open?")
     show("Flat", ["Flat.register"])
     show("Split", ["Pricing.fee_for"])
