@@ -33,16 +33,15 @@ THE GOAL
        Read it once at construction and the only way to change a flag is to
        restart, which is the one thing a flag exists to avoid.
 
-    2. bucket_of() must give the SAME answer in every process. Write it with
-       hash(subject) % 100 first and watch the last check fail - then run:
+    2. Pass the STUDENT to is_on(). A 30 percent rollout is decided per
+       student: bucket_of() turns a student id into a number from 0 to 99,
+       and the student is in if that number is below 30. It cannot be
+       random - the same student must get the same answer every time they
+       ask. hash(subject) % 100 is enough.
 
-           python -c "print(hash('s001') % 100)"
-
-       twice, and see why. Python randomises string hashing per process, so
-       two servers would put the same student in different buckets and the
-       feature would flicker on and off depending on which one answered.
-       Use hashlib instead. "It worked on my machine" and "it works" are
-       different claims.
+       One thing to know, not to fix today: Python's hash() of a string
+       changes each time the program starts, so the rollout count moves
+       from run to run. Real systems use a hash that never changes.
 
 THE TWIST
     The registrar phones: turn it off. You change one line of config. No
@@ -61,7 +60,6 @@ THE COST - and this one is not really about code
     grade? Nobody in this room can answer that with code, and that is
     precisely why you must ask before you ship it.
 """
-import hashlib
 import sys
 from abc import ABC, abstractmethod
 from check import check
@@ -102,12 +100,13 @@ class Percentage(GradingStrategy):
         return f"{round(score)}%"
 
 
-def bucket_of(subject, salt=""):
-    """A 0-99 bucket for this subject. Must be the SAME in every process.
+def bucket_of(subject):
+    """Turn a student id into a number from 0 to 99 - their "bucket".
 
-    Start with hash(subject) % 100, run the file twice, and watch it change.
-    Then fix it with hashlib.
+    The same student must always get the same bucket, so it cannot be random.
     """
+    # HINT: one line. hash(subject) turns the id into a big number;
+    # % 100 cuts that down to 0-99.
     raise NotImplementedError    # TODO
 
 
@@ -121,12 +120,19 @@ class FeatureFlags:
         self._flags[name] = value
 
     def is_on(self, name, subject=None):
-        # A flag is one of three things. Handle them in this order:
-        #   never set        -> False   (a typo in config must mean OFF)
-        #   True or False    -> itself
-        #   {"percent": n}   -> bucket_of(subject, name) < n
-        # No special case for 0 or 100 - work out why not. Buckets are 0-99.
-        raise NotImplementedError
+        """Is the flag called `name` on for this subject (a student id)?"""
+        # HINT: look the flag up with self._flags.get(name). You get back one
+        # of three things - handle them in this order:
+        #
+        #   1. None              nobody set this flag, or the name is
+        #                        misspelled. Return False - unknown means OFF.
+        #   2. True or False     return it as it is.
+        #                        isinstance(rule, bool) tells you it is one.
+        #   3. {"percent": 30}   return bucket_of(subject) < rule["percent"]
+        #
+        # Buckets are 0-99, so 0 percent is nobody and 100 percent is
+        # everybody. Case 3 needs nothing extra for them.
+        raise NotImplementedError    # TODO
 
 
 class Gradebook:
@@ -136,16 +142,21 @@ class Gradebook:
         self.candidate = candidate
 
     def strategy_for(self, student_id):
-        # TODO: ask self.flags whether NEW_GRADING is on for this student.
-        # On -> self.candidate. Off -> self.current. Ask on EVERY call.
-        raise NotImplementedError
+        """Which grading rule does this student get right now?"""
+        # HINT: one if. Ask self.flags.is_on(NEW_GRADING, student_id).
+        #   on   -> return self.candidate    the new rule
+        #   off  -> return self.current      the rule that already works
+        #
+        # Ask HERE, every time this method is called - not once in __init__.
+        # And pass student_id, or a percentage cannot tell students apart.
+        raise NotImplementedError    # TODO
 
     def grade(self, student_id, score):
-        # TODO: two lines. Get the strategy from strategy_for(student_id),
-        # then ask THAT object to grade the score. Note this method uses
-        # student_id for nothing except choosing the rule - once you have
-        # the rule, it only needs a number.
-        raise NotImplementedError
+        """Grade one score with whichever rule this student gets."""
+        # HINT: two lines.
+        #   1. get the rule from self.strategy_for(student_id)
+        #   2. return what that rule's grade(score) gives back
+        raise NotImplementedError    # TODO
 
 
 def demo():
@@ -192,7 +203,7 @@ def demo():
     print("  At 30 percent, the SAME flag gives different students different")
     print("  rules - and the same student always gets the same one:")
     for sid in ("s001", "s002", "s003", "s004", "s005"):
-        print(f"      {sid}  bucket {bucket_of(sid, NEW_GRADING):>2}  "
+        print(f"      {sid}  bucket {bucket_of(sid):>2}  "
               f"-> {book.grade(sid, 73)}")
 
 
@@ -205,27 +216,30 @@ if __name__ == "__main__":
     flags = FeatureFlags()
     book = Gradebook(flags, current=BulgarianScale(), candidate=Percentage())
 
-    # ---- STEP 1: the check we wrote first ---------------------------------
-    # The Gradebook above was built BEFORE this line runs, and is never
-    # rebuilt. If you read the flag in __init__, this cannot pass.
+    # One student, one score, one book. Only the flag changes.
+    # A score of 73 is "4 (Good)" on the old rule and "73%" on the new one.
+
+    # ---- 1. nothing set yet: the old rule ----------------------------------
+    # YOUR TURN: write a check called "unknown flag is off".
+    # book.grade("s001", 73) should give "4 (Good)".
+
+    # ---- 2. flag ON: the new rule (given) ----------------------------------
+    # The book was built before this line and is never rebuilt. If you read
+    # the flag in __init__, this cannot pass.
     flags.set(NEW_GRADING, True)
     check("flag on, same object", book.grade("s001", 73), "73%")
 
-    # YOUR TURN - two checks, then make them pass:
-    #   unknown flag is off             a FRESH FeatureFlags, nothing set,
-    #                                   grade s001 on 73 -> the OLD rule
-    #   flipped back with no restart    set it False on the SAME objects and
-    #                                   grade again. This is the 7am phone call.
+    # ---- 3. flag OFF again: the old rule is back ---------------------------
+    # YOUR TURN: set the flag to False on the SAME flags object, then write a
+    # check called "flipped back with no restart". The SAME book should give
+    # "4 (Good)" again. This is the registrar's 7am phone call.
 
-    # ---- GIVEN, and it is the point of the session -------------------------
-    # 56 is not a number from your machine. It is the number from every
-    # machine, forever, because sha256 gives the same answer in every process.
-    # A rollout only means something if all your servers agree who is in it.
-    #
-    # This CANNOT pass with hash(). Write bucket_of with hash() first, run it
-    # twice, and watch the number change. Then look up hashlib.
+    # ---- 4. 30 percent: some students, not all (given) ---------------------
+    # A percentage is decided one student at a time. If this says 0 or 200,
+    # the flag is being asked without the student - everybody lands in the
+    # same bucket and the rollout is all or nothing.
     flags.set(NEW_GRADING, {"percent": 30})
     rolled = sum(1 for i in range(200)
                  if book.grade(f"s{i:03d}", 73) == "73%")
-    check("30 percent rolls out the same way on every machine", rolled, 56)
-    print(f"        (rolled out to {rolled} of 200)")
+    check("30 percent reaches some students, not all", 0 < rolled < 200, True)
+    print(f"        (rolled out to {rolled} of 200 - about 60 is right)")

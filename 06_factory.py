@@ -30,6 +30,8 @@ YOUR TASK (25 min)
     Store the CLASS, not an instance. Two students sharing one rule object is
     session 07's disaster arriving a week early.
 
+    Every step has a HINT next to the code it belongs to.
+
 THE COST
     Run it, then ask: where was that class actually created? The stack trace
     no longer tells you. You traded "easy to find" for "easy to extend", and
@@ -60,18 +62,45 @@ class PassFail(GradingStrategy):
 
 
 class GradingFactory:
+    """One table: faculty name -> the thing that builds its grading rule.
+
+    You never write GradingFactory(). Both methods are classmethods, so you
+    call them on the class itself: GradingFactory.create("law").
+    """
     _registry = {}
 
     @classmethod
     def register(cls, faculty, builder):
+        """Add one row to the table."""
+        # HINT: one line. Store builder in cls._registry under the key faculty.
+        #
+        # A "builder" is anything you can put brackets after to get a rule.
+        # A class is one: PassFail is a builder, PassFail() is the rule.
         raise NotImplementedError    # TODO
 
     @classmethod
     def create(cls, faculty):
-        raise NotImplementedError    # TODO: KeyError with a clear message
+        """Build a fresh grading rule for this faculty."""
+        # HINT: three steps.
+        #   1. look the builder up in cls._registry
+        #   2. not there -> raise KeyError("no grading rule registered for: "
+        #                                  + faculty)
+        #   3. CALL the builder and return the result - builder(), with the
+        #      brackets. Without them you hand back the class, not a rule.
+        raise NotImplementedError    # TODO
 
 
-# TODO: register informatics, law, engineering (BulgarianScale pass_mark=45)
+# TODO: three lines, one per faculty. The first one is done for you -
+# uncomment it once register() works.
+#
+#   GradingFactory.register("informatics", BulgarianScale)
+#
+#   law          -> PassFail
+#   engineering  -> BulgarianScale with pass_mark=45
+#
+# HINT for engineering: BulgarianScale(pass_mark=45) is already a finished
+# rule - there is nothing left to call. Put `lambda:` in front of it, and it
+# becomes something that builds one each time it is called.
 
 
 if __name__ == "__main__":
@@ -89,10 +118,27 @@ if __name__ == "__main__":
           GradingFactory.create("classics").grade(80), "V")
 
     # YOUR TURN - write one check for each, then make them pass:
+    #
     #   informatics             create("informatics") is a BulgarianScale.
-    #                           Compare type(x).__name__, not the object -
-    #                           two instances are never equal.
-    #   law                     create("law") is a PassFail
-    #   engineering pass mark   create("engineering").pass_mark is 45
+    #                           Compare the class NAME, not the object - two
+    #                           instances are never equal:
+    #
+    #       check("informatics",
+    #             type(GradingFactory.create("informatics")).__name__,
+    #             "BulgarianScale")
+    #
+    #   law                     the same shape: create("law") is a PassFail
+    #
+    #   engineering pass mark   create("engineering").pass_mark is 45.
+    #                           Check the NUMBER, not the class name - the
+    #                           name would pass even if you forgot the 45.
+    #
     #   unknown faculty fails   create("astrology") raises KeyError.
-    #                           Use check_raises.
+    #                           check_raises takes the name, the error, then
+    #                           the function WITHOUT brackets and its argument:
+    #
+    #       check_raises("unknown faculty fails", KeyError,
+    #                    GradingFactory.create, "astrology")
+    #
+    #                           Write create("astrology") yourself and it
+    #                           blows up before check_raises can catch it.
