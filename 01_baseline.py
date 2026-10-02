@@ -51,7 +51,7 @@ class RegistrationSystem:
 
     def register(self, sid, cid):
         if sid not in self.students:
-            raise ValueError("no such student: " + sid)
+            raise ValueError("no Max: " + sid)
         if cid not in self.courses:
             raise ValueError("no such course: " + cid)
         for r in self.registrations:
